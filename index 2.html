@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>瞬間タッチ！</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="瞬間タッチ">
+<meta name="theme-color" content="#141b28">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2430;--bg1:#2b3a55;--bg2:#141b28;--card:#1e2738;--cell:#2d3a52;--lit:#ffd93d;--blue:#4fc3f7;--purple:#b388ff;--ok:#3fd67a;--bad:#ff5d5d;--txt:#eef2f8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;height:100%;background:linear-gradient(var(--bg1),var(--bg2));color:var(--txt);font-family:'DotGothic16','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;overflow:hidden}
+#wrap{max-width:440px;height:100%;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.card{background:var(--card);border:3px solid #3a4864;border-radius:0;box-shadow:4px 4px 0 #0b1018,inset 0 0 0 2px #4a5b7e;image-rendering:pixelated}
+#hud{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px;letter-spacing:.02em}
+#stats{display:flex;flex:1;justify-content:space-evenly}
+#hud span{display:flex;flex-direction:column;align-items:center;gap:2px}
+#hud i{font-style:normal}
+#hud b{font-size:19px;font-weight:400;color:var(--lit);letter-spacing:1px;text-shadow:2px 2px 0 rgba(0,0,0,.55),-1px 0 0 rgba(255,255,255,.12)}
+#stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:10px}
+#grid{width:min(94vw,420px);height:min(74vh,640px);display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(8,1fr);gap:6px}
+.cell{background:var(--cell);border:0;border-radius:0;box-shadow:inset -4px -4px 0 rgba(0,0,0,.3),inset 4px 4px 0 rgba(255,255,255,.06);transition:background .07s,transform .07s;touch-action:manipulation;display:flex;align-items:center;justify-content:center;color:#0a0d14;font-family:inherit;font-size:15px}
+.cell:active{transform:scale(.95)}
+.cell.lit{background:var(--lit);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2);animation:pop .18s steps(3)}
+.cell.lit-blue{background:var(--blue);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2);animation:pop .18s steps(3)}
+.cell.lit-blue.half{background:#1c6f96}
+.cell.lit-purple{background:var(--purple);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2);animation:pop .18s steps(3)}
+.cell.numlit{background:var(--lit);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2)}
+.cell.numdone{background:var(--ok);opacity:.55}
+.cell.numlit,.cell.numdone{font-size:clamp(20px,5.6vw,30px);font-weight:400;color:#12100a;text-shadow:2px 2px 0 rgba(255,255,255,.35),-1px -1px 0 rgba(0,0,0,.25)}
+.cell.co-yellow{background:var(--lit);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2)}
+.cell.co-red{background:var(--bad);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2)}
+.cell.co-purple{background:var(--purple);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2)}
+.cell.co-blue{background:var(--blue);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2)}
+.cell.co-green{background:var(--ok);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2)}
+.cell.co-done{opacity:.4}
+.cell.mshow{background:var(--lit);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2);animation:pop .15s steps(3)}
+.cell.hit{background:var(--ok);box-shadow:0 0 0 4px #fff8}
+.cell.bad{background:var(--bad);box-shadow:0 0 0 4px #fff8}
+#grid.wide{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(4,1fr);height:min(64vh,480px)}
+.cell.snd{font-size:clamp(24px,7vw,34px);color:var(--txt);text-shadow:2px 2px 0 rgba(0,0,0,.55);box-shadow:inset 0 -10px 0 var(--sc),inset -4px -4px 0 rgba(0,0,0,.3),inset 4px 4px 0 rgba(255,255,255,.06)}
+.cell.snd.mshow,.cell.snd.hit{background:var(--sc);color:#12100a;text-shadow:2px 2px 0 rgba(255,255,255,.35);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2)}
+.cell.snd.bad{background:var(--bad);color:#12100a}
+.cell.iblue{background:var(--blue);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2);animation:pop .15s steps(3)}
+#carousel{display:flex;align-items:flex-start;gap:8px;width:100%}
+#pageBox{flex:1;display:flex;flex-direction:column;gap:10px;min-height:min(440px,54vh);min-width:0}
+#panel #pageBox button{width:100%;font-size:16px;padding:12px 6px}
+#panel #carousel .arrow{flex:0 0 40px;width:40px;align-self:center;height:72px;padding:0;font-size:22px;background:none;color:var(--txt);border:3px solid #4a5b7e;box-shadow:none}
+#modeNo{font-size:13px;color:#cdd6e4;text-align:center;margin-top:10px}
+#dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.dot{width:8px;height:8px;background:#3a4864}.dot.on{background:var(--lit)}
+@keyframes slideL{from{transform:translateX(26px);opacity:.3}to{transform:none;opacity:1}}
+@keyframes slideR{from{transform:translateX(-26px);opacity:.3}to{transform:none;opacity:1}}
+#pageBox.sl{animation:slideL .18s steps(4)}#pageBox.sr{animation:slideR .18s steps(4)}
+.cell.mhalfL:not(.mshow):not(.hit):not(.bad){background:#3a4a6c}
+.cell.reveal{outline:4px solid #fff;outline-offset:-2px}
+.cell.sumopt{font-size:clamp(20px,5.6vw,30px);color:#12100a;text-shadow:2px 2px 0 rgba(255,255,255,.35),-1px -1px 0 rgba(0,0,0,.25)}
+.cell.sumopt:not(.hit):not(.bad):not(.sumans){background:var(--purple);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2)}
+.cell.sumans{background:var(--blue);box-shadow:0 0 0 4px #fff8,inset -4px -4px 0 rgba(0,0,0,.2)}
+#stage.p1turn{border-color:var(--lit);box-shadow:4px 4px 0 #0b1018,inset 0 0 0 2px var(--lit)}
+#stage.p2turn{border-color:var(--blue);box-shadow:4px 4px 0 #0b1018,inset 0 0 0 2px var(--blue)}
+.cell.hint{background:#fff;box-shadow:0 0 0 4px #fff8,0 0 18px rgba(255,255,255,.9)}
+@keyframes pop{0%{transform:scale(.75)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+#panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px;background:rgba(20,27,40,.97);border-radius:0}
+#panel[hidden]{display:none}
+#panel h1{margin:0;font-size:24px;font-weight:400}
+#panel p{margin:0;font-size:14px;line-height:1.7;max-width:300px;color:#cdd6e4}
+#modeBtns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
+#modeBtns button{width:100%}
+.sub{font-size:16px;background:none;color:var(--txt);border:2px solid #4a5b7e;box-shadow:none;padding:8px 20px}
+#panel button{font-family:inherit;font-size:17px;padding:12px 30px;background:var(--lit);color:#2a2210;border:3px solid #b98f00;border-radius:0;box-shadow:4px 4px 0 rgba(0,0,0,.4);cursor:pointer}
+#panel button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 rgba(0,0,0,.4)}
+#rankv{font-size:44px;margin:0}
+#helpPanel{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;padding:18px;background:rgba(14,19,28,.98);z-index:20;overflow-y:auto}
+#helpPanel[hidden]{display:none}
+#helpPanel h1{margin:0;font-size:22px;font-weight:400}
+#helpPanel dt{color:var(--lit);font-size:15px;margin-top:10px}
+#helpPanel dd{margin:2px 0 0;font-size:13px;line-height:1.6;color:#cdd6e4}
+#helpPanel button{align-self:center;margin-top:6px}
+#vs{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 12px;font-size:12px}
+#vs[hidden]{display:none}
+#vs span{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+#vs b{font-size:17px;font-weight:400;color:var(--lit);text-shadow:2px 2px 0 rgba(0,0,0,.55)}
+#vs #vsOp{color:var(--blue)}
+#vsMid{color:#cdd6e4;font-size:12px}
+body.net #grid{height:min(67vh,590px)}
+body.net #grid.wide{height:min(57vh,430px)}
+.row2{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+#panel .row2 .sub{font-size:14px;padding:8px 12px}
+#codeIn{font-family:inherit;font-size:24px;text-align:center;padding:8px;width:100%;background:#0f1520;color:var(--txt);border:3px solid #4a5b7e;border-radius:0;letter-spacing:8px;outline:none}
+#codeIn:focus{border-color:var(--lit)}
+#netMsg{color:var(--lit)!important;min-height:1.7em}
+.cutmark{font-size:52px!important;color:var(--bad)!important;margin:0!important;line-height:1!important}
+#vs.shaky{border-color:var(--bad)}
+#vs.shaky #vsMid{color:var(--bad);animation:blink .6s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.bigcode{font-size:48px!important;letter-spacing:10px;color:var(--lit)!important;margin:0!important}
+#back,#snd{background:rgba(0,0,0,.22);border:2px solid #4a5b7e;color:var(--txt);font-family:inherit;font-size:11px;padding:5px 9px;cursor:pointer;flex:0 0 auto;image-rendering:pixelated}
+#snd img{width:22px;height:auto;display:block;image-rendering:pixelated}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud" class="card"><button id="back">← もどる</button><div id="stats"><span><i id="l1">スコア</i> <b id="score">0</b></span><span><i id="l2">せいかい</i> <b id="acc">0%</b></span><span><i id="l3">はんのう</i> <b id="rt">-</b></span></div><button id="snd" aria-label="おと"><img id="sndImg" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAA/CAYAAABdA76NAAAA7UlEQVR4nO3bMWrDQBBA0SikcJXCl8gpcnqfwpdIkSqdc4K/xZDYQn6vXRDiMzAsQtvL0Nf3z63Ozu+nbfrcvXh99AvslTBBmCBMECYIE95Wh6uVfHQmJggThAnCBGGCMGG790qe3rxv1898z+3j8ue3eRMThAnCBGGCMEGYsLxd39t0Jf/HKjcxQZggTBAmCBOECbta11PTlbxa8yYmCBOECcIEYYIw4RDrenq7Xp2ZmCBMECYIE4QJwgTfroOJCcIEYYIwQZggTFiuuekq9yPXgQkThAnCBGGCMGG8Vv13/aSECcIEYYIwQZjwC/2wMUWZSQ79AAAAAElFTkSuQmCC"></button></div>
+  <div id="vs" class="card" hidden><span>じぶん <b id="vsMe">0</b></span><span id="vsMid">VS</span><span>あいて <b id="vsOp">0</b></span></div>
+  <div id="stage" class="card">
+    <div id="grid"></div>
+    <div id="panel" class="card">
+      <h1>瞬間タッチ！</h1>
+      <p id="panelText">マスがランダムに光るよ。あそびかたをえらんでね！</p>
+      <div id="modeBtns"></div>
+      <div class="row2"><button class="sub" id="helpBtn">？ あそびかたを見る</button><button class="sub" id="netBtn">つうしんたいせん</button></div>
+    </div>
+    <div id="helpPanel" class="card" hidden>
+      <h1>あそびかた</h1>
+      <dl>
+        <dt>ノーマルタッチ</dt><dd>黄色く光ったマスをすぐタッチ！ぜんぶで30回。</dd>
+        <dt>トリプルカラータッチ</dt><dd>黄色は1回タップ、青色は2回連続タップ、紫色は絶対おしちゃダメ。ぜんぶで30回。</dd>
+        <dt>コンビタッチ</dt><dd>1〜4このマスに数字が出るよ。番号の順番どおりにタッチ！まちがえるとミス。30秒間の時間制。</dd>
+        <dt>メモリタッチ</dt><dd>マスが光る順番を覚えて、同じ順にタップ！正解するたびに1個ずつ増えていくよ。まちがえたらおしまい。</dd>
+        <dt>メモリランダムタッチ</dt><dd>毎ラウンド、位置も数（2〜5個）もランダムに変わるよ。光った順を覚えてタッチ。まちがえても次のラウンドに進めるよ。全15ラウンド。</dd>
+        <dt>カラータッチ</dt><dd>色つきのマスが同時に光るよ。場所と色はランダムだけど、押す順番は「黄→赤→紫→青→緑」で固定！全15ラウンド。</dd>
+        <dt>カラーフラッシュタッチ</dt><dd>色つきのマスが1こずつ順番に光るよ。どこに何色があったか覚えて、あとから「黄→赤→紫→青→緑」の順でタッチ！全15ラウンド。</dd>
+        <dt>インスタントタッチ</dt><dd>3〜7このマスが一瞬だけ同時に青く光るよ！消えたら、光ってた場所を全部タッチ（順番は自由）。まちがえたら、答えを見せて次のラウンドへ。全10ラウンド。</dd>
+        <dt>サウンドタッチ</dt><dd>盤面が8マスのドレミに変身！鳴った音の順番を耳でおぼえて、同じ順にタッチ。まちがえても次のラウンドに進めるよ。全10ラウンド。</dd>
+        <dt>サウンドハイドタッチ</dt><dd>サウンドタッチの光らないバージョン！ドレミの音は鳴るけど、ボタンは光らないよ。耳だけをたよりに、鳴った順番どおりにタッチ！まちがえても次に進めるよ。全10ラウンド。</dd>
+        <dt>ミラータッチ</dt><dd>左がわのマスが一瞬だけ光るよ！鏡にうつしたみたいに、右がわの左右対称の場所をタッチ（順番は自由）。まちがえたら答えを見せて次へ。全10ラウンド。</dd>
+        <dt>オッドカラータッチ</dt><dd>同じ色のマスの中に、ちょっとだけ色がちがうマスが1こまざってるよ！いそいで見つけてタッチ。ラウンドが進むほど色の差が小さくなる。全12ラウンド。</dd>
+        <dt>サムタッチ</dt><dd>マスに数字が2つ出て、すぐ消えるよ。そのたし算の答えを暗算して、次に出てくる4〜7この数字から、同じ答えのマスをタッチ！答えと同じ数字は1つだけ。前半5ラウンドは2つ、後半5ラウンドは3つをたすよ。全10ラウンド。</dd>
+        <dt>サムランダムタッチ</dt><dd>サムタッチの難しいバージョン！たす数字が、毎ラウンド2つ・3つ・4つのどれかにランダムで変わるよ。たし算の答えと同じ数字は、やっぱり1つだけ。全10ラウンド。</dd>
+        <dt>メモリバトルタッチ</dt><dd>ふたりで交代の対戦！1P（黄）が1マス足す→2P（青）は全部なぞって1マス足す…をくりかえして、10マスつながったらラウンド1おわり。ラウンド2は1回に2マスずつ足して16マス、ラウンド3は3マスずつ足して24マスでおわり！おてつきは2回までOK、3回目でアウト（ラウンドをまたいでもちこし）。3ラウンドやりきったら、おてつきがのこってる人の勝ち！</dd>
+        <dt>つうしんたいせん</dt><dd>ひとりが「へやをつくる」で4けたの番号を出して、もうひとりがその番号で「へやにはいる」よ。へやを作った人（1P）がモードをえらぶと、3・2・1でいっしょにスタート！ふたりに同じ問題が出て、スコアが高いほうの勝ち。メモリバトルタッチは、交代で押す対戦になるよ（へやを作った人が1P）。どっちかがへやを出たら解散！</dd>
+      </dl>
+      <button id="helpClose">とじる</button>
+    </div>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let rnd=Math.random;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+let AC,mute=false;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC}
+function tone(f,d,ty,v,t0,f2){const a=ac();if(!a||mute)return;const t=a.currentTime+(t0||0),o=a.createOscillator(),g=a.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d)}
+function noise(d,f0,f1,v,t0){const a=ac();if(!a||mute)return;const n=Math.max(1,Math.floor(a.sampleRate*d)),bf=a.createBuffer(1,n,a.sampleRate),x=bf.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(t0||0);s.buffer=bf;fl.type='lowpass';fl.frequency.setValueAtTime(f0,t);fl.frequency.exponentialRampToValueAtTime(f1,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(fl);fl.connect(g);g.connect(a.destination);s.start(t)}
+const goodSnd=()=>{tone(880,.09,'square',.16,0);tone(1318,.14,'sine',.13,.05)};
+const badSnd=()=>{noise(.22,1200,150,.22,0);tone(140,.24,'sawtooth',.16,0,70)};
+
+const ROUNDS=30,CELLS=32;
+let runId=0;
+let cells=[],score=0,hits=0,misses=0,rts=[],round=0,litIdx=-1,litAt=0,litColor='y',tapCnt=0,timeoutId=null,running=false,lastIdx=-1,mode='normal';
+
+function buildGrid(n){
+  n=n||CELLS;
+  const g=$('grid');g.innerHTML='';
+  g.classList.toggle('wide',n===8);
+  cells=[];
+  for(let i=0;i<n;i++){
+    const b=document.createElement('button');
+    b.className='cell';
+    if((mode==='sound'||mode==='soundHide')&&n===8){b.classList.add('snd');b.style.setProperty('--sc',SN_COLORS[i]);b.textContent=SN_NAMES[i]}
+    b.addEventListener('pointerdown',e=>{e.preventDefault();if(mode==='order')onOrderCell(i);else if(mode==='memory')onMemoryCell(i);else if(mode==='memoryRandom')onMemRandCell(i);else if(mode==='colorOrder')onColorOrderCell(i);else if(mode==='colorFlash')onColorFlashCell(i);else if(mode==='instant')onInstantCell(i);else if(mode==='sound'||mode==='soundHide')onSoundCell(i);else if(mode==='mirror')onMirrorCell(i);else if(mode==='oddColor')onOddCell(i);else if(mode==='sum'||mode==='sumRandom')onSumCell(i);else if(mode==='duel')onDuelCell(i);else onCell(i)});
+    g.appendChild(b);cells.push(b);
+  }
+}
+function timeoutFor(r){return Math.max(430,950-r*26)}
+function gapFor(){return 260+rnd()*520}
+function setHudLabels(m){
+  $('l1').textContent=m==='memory'?'レベル':'スコア';
+  $('l2').textContent=m==='memory'?'ちょうし':'せいかい';
+  $('l3').textContent=m==='order'?'のこり':(m==='memoryRandom'||m==='colorOrder'||m==='colorFlash'||m==='instant'||m==='sound'||m==='soundHide'||m==='mirror'||m==='oddColor'||m==='sum'||m==='sumRandom')?'ラウンド':'はんのう';
+}
+function updateHud(){updateHud0();if(online)onlineHud()}
+function updateHud0(){
+  if(mode==='duel'){
+    $('l2').textContent='R'+duRound+' ながさ';
+    $('score').textContent=duTurn+'P'+'●'.repeat(Math.max(0,duLife[duTurn]))+'○'.repeat(Math.max(0,3-duLife[duTurn]));
+    $('acc').textContent=duSeq.length+'/'+DU_TARGET[duRound-1];
+    $('rt').textContent=duIdx<duRepLen?(duRepLen-duIdx):'+'+(DU_PER[duRound-1]-duAdded);
+    return;
+  }
+  if(mode==='memory'){
+    $('score').textContent=memLevel;
+    $('acc').textContent=memInput?memInput.length+'/'+memSeq.length:'-';
+    $('rt').textContent='-';
+    return;
+  }
+  if(mode==='memoryRandom'){
+    $('score').textContent=score;
+    $('acc').textContent=(hits+misses)?Math.round(hits/(hits+misses)*100)+'%':'0%';
+    $('rt').textContent=mrRound+'/'+MR_ROUNDS;
+    return;
+  }
+  if(mode==='colorOrder'){
+    $('score').textContent=score;
+    $('acc').textContent=(hits+misses)?Math.round(hits/(hits+misses)*100)+'%':'0%';
+    $('rt').textContent=coRound+'/'+CO_ROUNDS;
+    return;
+  }
+  if(mode==='instant'||mode==='sound'||mode==='soundHide'||mode==='mirror'||mode==='oddColor'||mode==='sum'||mode==='sumRandom'){
+    $('score').textContent=score;
+    $('acc').textContent=(hits+misses)?Math.round(hits/(hits+misses)*100)+'%':'0%';
+    $('rt').textContent=mode==='instant'?inRound+'/'+IN_ROUNDS:mode==='mirror'?miRound+'/'+MI_ROUNDS:mode==='oddColor'?ocRound+'/'+OC_ROUNDS:(mode==='sum'||mode==='sumRandom')?smRound+'/'+SM_ROUNDS:snRound+'/'+SN_ROUNDS;
+    return;
+  }
+  if(mode==='colorFlash'){
+    $('score').textContent=score;
+    $('acc').textContent=(hits+misses)?Math.round(hits/(hits+misses)*100)+'%':'0%';
+    $('rt').textContent=cfRound+'/'+CF_ROUNDS;
+    return;
+  }
+  $('score').textContent=score;
+  $('acc').textContent=(hits+misses)?Math.round(hits/(hits+misses)*100)+'%':'0%';
+  if(mode==='order'){
+    const left=Math.max(0,Math.ceil((orderEnd-performance.now())/1000));
+    $('rt').textContent=running?left+'s':'-';
+  }else{
+    $('rt').textContent=rts.length?Math.round(rts.reduce((a,b)=>a+b,0)/rts.length)+'ms':'-';
+  }
+}
+function clearCell(i,cls){
+  cells[i].classList.remove('lit','lit-blue','lit-purple','half');
+  if(cls){cells[i].classList.add(cls);setTimeout(()=>cells[i].classList.remove(cls),220)}
+}
+function pickColor(){
+  if(mode==='normal')return 'y';
+  const r=rnd();
+  return r<.5?'y':(r<.8?'b':'p');
+}
+function colorClass(c){return c==='y'?'lit':c==='b'?'lit-blue':'lit-purple'}
+function nextRound(){
+  if(round>=ROUNDS)return finish();
+  round++;
+  const gap=gapFor();
+  timeoutId=setTimeout(()=>{
+    let i=Math.floor(rnd()*CELLS);
+    if(i===lastIdx)i=(i+1+Math.floor(rnd()*(CELLS-1)))%CELLS;
+    lastIdx=i;litIdx=i;litAt=performance.now();litColor=pickColor();tapCnt=0;
+    cells[i].classList.add(colorClass(litColor));
+    const to=timeoutFor(round)*(litColor==='b'?1.7:1);
+    timeoutId=setTimeout(()=>{
+      if(litIdx===i){
+        if(litColor==='p'){
+          hits++;score+=60;goodSnd();clearCell(i,'hit');litIdx=-1;updateHud();nextRound();
+        }else{
+          miss(i);
+        }
+      }
+    },to);
+  },gap);
+}
+function miss(i){
+  misses++;badSnd();
+  clearCell(i,'bad');
+  litIdx=-1;
+  updateHud();
+  nextRound();
+}
+function onCell(i){
+  if(!running)return;
+  ac();
+  if(i===litIdx){
+    if(litColor==='p'){
+      misses++;badSnd();clearCell(i,'bad');litIdx=-1;clearTimeout(timeoutId);updateHud();nextRound();return;
+    }
+    if(litColor==='b'){
+      tapCnt++;
+      if(tapCnt<2){cells[i].classList.add('half');tone(600,.05,'square',.08,0);return}
+    }
+    const rt=performance.now()-litAt;
+    rts.push(rt);hits++;score+=Math.max(10,Math.round(200-rt/6));
+    goodSnd();clearCell(i,'hit');
+    litIdx=-1;clearTimeout(timeoutId);
+    updateHud();
+    nextRound();
+  }else{
+    misses++;badSnd();
+    cells[i].classList.add('bad');setTimeout(()=>cells[i].classList.remove('bad'),180);
+    updateHud();
+  }
+}
+function rank(){
+  const acc=(hits+misses)?hits/(hits+misses):0;
+  const avg=rts.length?rts.reduce((a,b)=>a+b,0)/rts.length:999;
+  if(mode==='memory'){
+    if(memLevel>=14)return['⚡','神がかり記憶力！'];
+    if(memLevel>=9)return['🌟','素晴らしい記憶力！'];
+    if(memLevel>=5)return['👍','なかなかいい感じ！'];
+    return['🐢','これから伸びるはず！'];
+  }
+  if(mode==='memoryRandom'){
+    if(acc>=.9&&hits>=12)return['⚡','神がかり記憶力！'];
+    if(acc>=.7&&hits>=8)return['🌟','素晴らしい記憶力！'];
+    if(hits>=4)return['👍','なかなかいい感じ！'];
+    return['🐢','これから伸びるはず！'];
+  }
+  if(mode==='colorOrder'){
+    if(acc>=.9&&hits>=12)return['⚡','神がかり判断力！'];
+    if(acc>=.7&&hits>=8)return['🌟','素晴らしい判断力！'];
+    if(hits>=4)return['👍','なかなかいい感じ！'];
+    return['🐢','これから伸びるはず！'];
+  }
+  if(mode==='colorFlash'){
+    if(acc>=.9&&hits>=12)return['⚡','神がかり記憶力！'];
+    if(acc>=.7&&hits>=8)return['🌟','素晴らしい記憶力！'];
+    if(hits>=4)return['👍','なかなかいい感じ！'];
+    return['🐢','これから伸びるはず！'];
+  }
+  if(mode==='instant'||mode==='sound'||mode==='soundHide'||mode==='mirror'||mode==='oddColor'||mode==='sum'||mode==='sumRandom'){
+    const g=(mode==='sum'||mode==='sumRandom')?'暗算力':mode==='instant'?'瞬間記憶力':mode==='soundHide'?'耳だけの記憶力':mode==='mirror'?'鏡の記憶力':mode==='oddColor'?'色の見分け力':'絶対音感';
+    if(acc>=.9&&hits>=8)return['⚡','神がかり'+g+'！'];
+    if(acc>=.7&&hits>=5)return['🌟','素晴らしい'+g+'！'];
+    if(hits>=3)return['👍','なかなかいい感じ！'];
+    return['🐢','これから伸びるはず！'];
+  }
+  if(mode==='order'){
+    if(acc>=.9&&hits>=12)return['⚡','神がかり反射神経！'];
+    if(acc>=.75&&hits>=8)return['🌟','素晴らしい反射神経！'];
+    if(hits>=4)return['👍','なかなかいい感じ！'];
+    return['🐢','これから伸びるはず！'];
+  }
+  if(acc>=.95&&avg<=280)return['⚡','神がかり反射神経！'];
+  if(acc>=.85&&avg<=380)return['🌟','素晴らしい反射神経！'];
+  if(acc>=.65)return['👍','なかなかいい感じ！'];
+  return['🐢','これから伸びるはず！'];
+}
+// ---- memory mode ----
+let memSeq=[],memInput=[],memLevel=0,memPlaying=false;
+function memFlash(i,cls,ms){
+  cells[i].classList.add(cls);
+  return new Promise(r=>setTimeout(()=>{cells[i].classList.remove(cls);r()},ms));
+}
+async function playbackSeq(seq,after){
+  memPlaying=true;updateHud();
+  await sleep(260);
+  for(const i of seq){
+    if(!running)return;
+    tone(440+i*14,.13,'square',.14,0);
+    await memFlash(i,'mshow',160);
+    await sleep(80);
+  }
+  memPlaying=false;updateHud();
+  if(after)after();
+}
+async function memPlayback(){
+  memInput=[];
+  await playbackSeq(memSeq);
+}
+function memNext(){
+  memSeq.push(Math.floor(rnd()*CELLS));
+  memLevel=memSeq.length-1;
+  updateHud();
+  memPlayback();
+}
+function onMemoryCell(i){
+  if(!running||memPlaying)return;
+  ac();
+  memInput.push(i);
+  const k=memInput.length-1;
+  if(memSeq[k]!==i){
+    badSnd();memFlash(i,'bad',220);
+    score=memLevel;
+    return finish();
+  }
+  goodSnd();memFlash(i,'hit',180);
+  updateHud();
+  if(memInput.length===memSeq.length){
+    score=memSeq.length;
+    setTimeout(memNext,650);
+  }
+}
+// ---- memory random mode ----
+const MR_ROUNDS=15;
+let mrRound=0,mrSeq=[],mrInput=[];
+function mrNext(){
+  if(mrRound>=MR_ROUNDS)return finish();
+  mrRound++;
+  const n=2+Math.floor(rnd()*4);
+  const idxs=[];
+  while(idxs.length<n){const i=Math.floor(rnd()*CELLS);if(!idxs.includes(i))idxs.push(i)}
+  mrSeq=idxs;mrInput=[];
+  updateHud();
+  playbackSeq(mrSeq,()=>updateHud());
+}
+function onMemRandCell(i){
+  if(!running||memPlaying)return;
+  ac();
+  const k=mrInput.length;
+  if(mrSeq[k]!==i){
+    misses++;badSnd();memFlash(i,'bad',220);updateHud();
+    setTimeout(mrNext,550);return;
+  }
+  mrInput.push(i);
+  goodSnd();memFlash(i,'hit',180);
+  if(mrInput.length===mrSeq.length){
+    hits++;score+=mrSeq.length*15;updateHud();
+    setTimeout(mrNext,650);
+  }else{
+    updateHud();
+  }
+}
+// ---- color order mode ----
+const CO_ROUNDS=15;
+const COLOR_ORDER=['yellow','red','purple','blue','green'];
+let coRound=0,coSet=[],coInput=[],coTimeout=null;
+function coClear(){coSet.forEach(o=>cells[o.i].classList.remove('co-yellow','co-red','co-purple','co-blue','co-green','co-done'));coSet=[]}
+function coNextRound(){
+  if(!running)return;
+  clearTimeout(coTimeout);coClear();
+  if(coRound>=CO_ROUNDS)return finish();
+  coRound++;
+  const n=2+Math.floor(rnd()*4);
+  const colors=shuf([...COLOR_ORDER]).slice(0,n);
+  const idxs=[];
+  while(idxs.length<n){const i=Math.floor(rnd()*CELLS);if(!idxs.includes(i))idxs.push(i)}
+  coSet=idxs.map((i,k)=>({i,color:colors[k]}));
+  coInput=[];
+  coSet.forEach(o=>cells[o.i].classList.add('co-'+o.color));
+  updateHud();
+  coTimeout=setTimeout(()=>{misses++;badSnd();coNextRound()},1300+n*650);
+}
+function coExpected(){
+  const remain=COLOR_ORDER.filter(c=>coSet.some(o=>o.color===c)&&!coInput.includes(c));
+  return remain[0];
+}
+function onColorOrderCell(i){
+  if(!running)return;
+  ac();
+  const o=coSet.find(x=>x.i===i);
+  const exp=coExpected();
+  if(!o||o.color!==exp||coInput.includes(o.color)){
+    misses++;badSnd();
+    cells[i].classList.add('bad');setTimeout(()=>cells[i].classList.remove('bad'),180);
+    updateHud();coNextRound();return;
+  }
+  coInput.push(o.color);
+  goodSnd();cells[i].classList.add('co-done');
+  if(coInput.length===coSet.length){
+    hits++;score+=coSet.length*15;updateHud();
+    setTimeout(coNextRound,650);
+  }else{
+    updateHud();
+  }
+}
+// ---- color flash mode (memory version of the fixed color order) ----
+const CF_ROUNDS=15;
+let cfRound=0,cfSet=[],cfInput=[];
+async function cfPlayback(revealOrder){
+  memPlaying=true;updateHud();
+  await sleep(260);
+  for(const o of revealOrder){
+    if(!running)return;
+    tone(440+COLOR_ORDER.indexOf(o.color)*70,.13,'square',.14,0);
+    await memFlash(o.i,'co-'+o.color,220);
+    await sleep(90);
+  }
+  memPlaying=false;updateHud();
+}
+function cfNextRound(){
+  if(!running)return;
+  if(cfRound>=CF_ROUNDS)return finish();
+  cfRound++;
+  const n=2+Math.floor(rnd()*4);
+  const colors=shuf([...COLOR_ORDER]).slice(0,n);
+  const idxs=[];
+  while(idxs.length<n){const i=Math.floor(rnd()*CELLS);if(!idxs.includes(i))idxs.push(i)}
+  cfSet=idxs.map((i,k)=>({i,color:colors[k]}));
+  cfInput=[];
+  updateHud();
+  const revealOrder=shuf([...cfSet]);
+  cfPlayback(revealOrder);
+}
+function cfExpected(){
+  const remain=COLOR_ORDER.filter(c=>cfSet.some(o=>o.color===c)&&!cfInput.includes(c));
+  return remain[0];
+}
+function onColorFlashCell(i){
+  if(!running||memPlaying)return;
+  ac();
+  const o=cfSet.find(x=>x.i===i);
+  const exp=cfExpected();
+  if(!o||o.color!==exp||cfInput.includes(o.color)){
+    misses++;badSnd();
+    cells[i].classList.add('bad');setTimeout(()=>cells[i].classList.remove('bad'),180);
+    updateHud();setTimeout(cfNextRound,550);return;
+  }
+  cfInput.push(o.color);
+  goodSnd();memFlash(i,'hit',180);
+  if(cfInput.length===cfSet.length){
+    hits++;score+=cfSet.length*15;updateHud();
+    setTimeout(cfNextRound,650);
+  }else{
+    updateHud();
+  }
+}
+// ---- instant mode (一瞬だけ光る→全部タッチ) ----
+const IN_ROUNDS=10;
+let inRound=0,inSet=[],inHit=[],inLock=true;
+const later=(fn,ms)=>{const id=runId;setTimeout(()=>{if(running&&id===runId)fn()},ms)};
+function inClear(){cells.forEach(c=>c.classList.remove('iblue','hit','bad'))}
+function inNext(){
+  if(!running)return;
+  inClear();
+  if(inRound>=IN_ROUNDS)return finish();
+  inRound++;
+  const n=3+Math.floor(rnd()*5);
+  const idxs=[];
+  while(idxs.length<n){const i=Math.floor(rnd()*CELLS);if(!idxs.includes(i))idxs.push(i)}
+  inSet=idxs;inHit=[];inLock=true;
+  updateHud();
+  later(()=>{
+    tone(620,.1,'square',.14,0);
+    inSet.forEach(i=>cells[i].classList.add('iblue'));
+    later(()=>{inSet.forEach(i=>cells[i].classList.remove('iblue'));inLock=false;updateHud()},Math.max(400,700-inRound*30));
+  },500);
+}
+function onInstantCell(i){
+  if(!running||inLock)return;
+  ac();
+  if(inHit.includes(i))return;
+  if(!inSet.includes(i)){
+    misses++;badSnd();memFlash(i,'bad',220);
+    inLock=true;
+    inSet.filter(x=>!inHit.includes(x)).forEach(x=>cells[x].classList.add('iblue'));
+    updateHud();
+    later(inNext,1000);
+    return;
+  }
+  inHit.push(i);
+  tone(700+inHit.length*70,.08,'square',.13,0);
+  cells[i].classList.add('hit');
+  if(inHit.length===inSet.length){
+    hits++;score+=inSet.length*20;goodSnd();
+    inLock=true;updateHud();
+    later(inNext,650);
+  }else{
+    updateHud();
+  }
+}
+// ---- sound mode (ドレミ8マス) ----
+const SN_ROUNDS=10;
+const SN_NAMES=['ド','レ','ミ','ファ','ソ','ラ','シ','ド'];
+const SN_FREQS=[261.63,293.66,329.63,349.23,392,440,493.88,523.25];
+const SN_COLORS=['#ff5d5d','#ff9f43','#ffd93d','#3fd67a','#4fc3f7','#6c8cff','#b388ff','#ff7eb6'];
+let snRound=0,snSeq=[],snInput=[],snBusy=true;
+function snNote(i,d){tone(SN_FREQS[i],d,'triangle',.24,0)}
+async function snPlayback(){
+  const id=runId;
+  snBusy=true;updateHud();
+  await sleep(400);
+  for(const i of snSeq){
+    if(!running||id!==runId)return;
+    snNote(i,.3);
+    if(mode==='soundHide')await sleep(280);else await memFlash(i,'mshow',280);
+    await sleep(120);
+  }
+  if(!running||id!==runId)return;
+  snBusy=false;updateHud();
+}
+function snNext(){
+  if(!running)return;
+  if(snRound>=SN_ROUNDS)return finish();
+  snRound++;
+  const n=3+Math.floor(rnd()*4);
+  snSeq=Array.from({length:n},()=>Math.floor(rnd()*8));
+  snInput=[];
+  updateHud();
+  snPlayback();
+}
+function onSoundCell(i){
+  if(!running||snBusy)return;
+  ac();
+  const k=snInput.length;
+  if(snSeq[k]!==i){
+    misses++;badSnd();memFlash(i,'bad',220);updateHud();
+    snBusy=true;later(snNext,600);return;
+  }
+  snInput.push(i);
+  snNote(i,.2);if(mode!=='soundHide')memFlash(i,'hit',180);
+  if(snInput.length===snSeq.length){
+    hits++;score+=snSeq.length*15;snBusy=true;updateHud();
+    later(snNext,700);
+  }else{
+    updateHud();
+  }
+}
+// ---- mirror mode (左が光る→右の対称位置をタッチ) ----
+const MI_ROUNDS=10;
+let miRound=0,miSrc=[],miAns=[],miHit=[],miLock=true;
+const mirrorOf=i=>Math.floor(i/4)*4+(3-i%4);
+function miClear(){cells.forEach(c=>c.classList.remove('mshow','hit','bad'))}
+function miNext(){
+  if(!running)return;
+  miClear();
+  if(miRound>=MI_ROUNDS)return finish();
+  miRound++;
+  const n=2+Math.floor(rnd()*4);
+  const left=[];for(let i=0;i<CELLS;i++)if(i%4<2)left.push(i);
+  miSrc=[];
+  while(miSrc.length<n){const i=left[Math.floor(rnd()*left.length)];if(!miSrc.includes(i))miSrc.push(i)}
+  miAns=miSrc.map(mirrorOf);miHit=[];miLock=true;
+  updateHud();
+  later(()=>{
+    tone(560,.1,'square',.14,0);
+    miSrc.forEach(i=>cells[i].classList.add('mshow'));
+    later(()=>{miSrc.forEach(i=>cells[i].classList.remove('mshow'));miLock=false;updateHud()},300+n*100);
+  },500);
+}
+function onMirrorCell(i){
+  if(!running||miLock)return;
+  ac();
+  if(miHit.includes(i))return;
+  if(!miAns.includes(i)){
+    misses++;badSnd();memFlash(i,'bad',220);
+    miLock=true;
+    miAns.filter(x=>!miHit.includes(x)).forEach(x=>cells[x].classList.add('mshow'));
+    updateHud();
+    later(miNext,1100);
+    return;
+  }
+  miHit.push(i);
+  tone(700+miHit.length*70,.08,'square',.13,0);
+  cells[i].classList.add('hit');
+  if(miHit.length===miAns.length){
+    hits++;score+=miAns.length*20;goodSnd();
+    miLock=true;updateHud();
+    later(miNext,650);
+  }else{
+    updateHud();
+  }
+}
+// ---- odd color mode (ちょっとだけ色がちがう1マスをさがす) ----
+const OC_ROUNDS=12;
+let ocRound=0,ocOdd=-1,ocOpen=false,ocTok=0,ocAt=0;
+function ocClear(){cells.forEach(c=>{c.style.background='';c.classList.remove('hit','bad','reveal')})}
+function ocNext(){
+  if(!running)return;
+  ocClear();
+  if(ocRound>=OC_ROUNDS)return finish();
+  ocRound++;
+  const h=Math.floor(rnd()*360);
+  const d=Math.max(5,22-ocRound*1.5)*(rnd()<.5?-1:1);
+  const base='hsl('+h+',65%,52%)',odd='hsl('+h+',65%,'+(52+d)+'%)';
+  ocOdd=Math.floor(rnd()*CELLS);
+  cells.forEach((c,i)=>{c.style.background=i===ocOdd?odd:base});
+  ocAt=performance.now();ocOpen=true;
+  updateHud();
+  const t=++ocTok;
+  later(()=>{if(t===ocTok&&ocOpen)ocMiss(-1)},Math.max(3000,7000-ocRound*350));
+}
+function ocMiss(i){
+  ocOpen=false;ocTok++;
+  misses++;badSnd();
+  if(i>=0){cells[i].style.background='';cells[i].classList.add('bad')}
+  cells[ocOdd].classList.add('reveal');
+  updateHud();
+  later(ocNext,1100);
+}
+function onOddCell(i){
+  if(!running||!ocOpen)return;
+  ac();
+  if(i!==ocOdd)return ocMiss(i);
+  ocOpen=false;ocTok++;
+  const rt=performance.now()-ocAt;
+  hits++;score+=Math.max(20,Math.round(150-rt/50));
+  goodSnd();
+  cells[i].style.background='';cells[i].classList.add('hit');
+  updateHud();
+  later(ocNext,500);
+}
+// ---- sum mode (数字をたして、答えのマスをタッチ) ----
+const SM_ROUNDS=10;
+let smRound=0,smAns=0,smOpen=false,smAt=0,smTok=0;
+function pickCells(n){const a=[];while(a.length<n){const i=Math.floor(rnd()*CELLS);if(!a.includes(i))a.push(i)}return a}
+function smClear(){cells.forEach(c=>{c.textContent='';c.classList.remove('numlit','sumopt','sumans','hit','bad','reveal')})}
+function smNext(){
+  if(!running)return;
+  smClear();
+  if(smRound>=SM_ROUNDS)return finish();
+  smRound++;
+  const k=mode==='sumRandom'?2+Math.floor(rnd()*3):(smRound<=5?2:3);
+  const nums=Array.from({length:k},()=>1+Math.floor(rnd()*9));
+  smAns=nums.reduce((a,b)=>a+b,0);
+  smOpen=false;
+  updateHud();
+  later(()=>{
+    pickCells(k).forEach((ci,j)=>{cells[ci].textContent=nums[j];cells[ci].classList.add('numlit')});
+    tone(620,.1,'square',.14,0);
+    later(()=>{
+      smClear();
+      const n=4+Math.floor(rnd()*4);
+      const pool=[];
+      for(let v=Math.max(1,smAns-6);v<=smAns+6;v++)if(v!==smAns)pool.push(v);
+      shuf(pool);
+      const vals=shuf([smAns,...pool.slice(0,n-1)]);
+      pickCells(n).forEach((ci,j)=>{cells[ci].textContent=vals[j];cells[ci].classList.add('sumopt')});
+      tone(880,.08,'square',.12,0);
+      smAt=performance.now();smOpen=true;
+      const t=++smTok;
+      later(()=>{if(t===smTok&&smOpen)smMiss(-1)},4700);
+    },1200+(k-2)*530);
+  },330);
+}
+function smMiss(i){
+  smOpen=false;smTok++;
+  misses++;badSnd();
+  if(i>=0)cells[i].classList.add('bad');
+  const ok=cells.find(c=>c.classList.contains('sumopt')&&+c.textContent===smAns);
+  if(ok)ok.classList.add('sumans');
+  updateHud();
+  later(smNext,800);
+}
+function onSumCell(i){
+  if(!running||!smOpen)return;
+  ac();
+  const c=cells[i];
+  if(!(c.classList.contains('sumopt')&&+c.textContent===smAns))return smMiss(i);
+  smOpen=false;smTok++;
+  const rt=performance.now()-smAt;
+  hits++;score+=100+Math.max(0,50-Math.round(rt/100));
+  goodSnd();c.classList.add('hit');
+  updateHud();
+  later(smNext,470);
+}
+// ---- duel mode (ふたり交代・ラウンド制メモリバトル) ----
+const DU_PER=[1,2,3],DU_TARGET=[10,16,24];
+let duSeq=[],duIdx=0,duTurn=1,duLock=true,duLife={1:3,2:3},duRound=1,duRepLen=0,duAdded=0;
+const DU_CLS={1:'mshow',2:'iblue'};
+function duBanner(title,text,ms,next){
+  $('panel').innerHTML=`<h1>${title}</h1><p>${text}</p>`;
+  $('panel').hidden=false;
+  later(()=>{$('panel').hidden=true;next()},ms);
+}
+function duStartRound(){
+  const per=DU_PER[duRound-1],tg=DU_TARGET[duRound-1];
+  duSeq=[];duTurn=1;duIdx=0;duRepLen=0;duAdded=0;duLock=true;
+  $('stage').classList.remove('p1turn','p2turn');
+  updateHud();
+  const head=duRound>1?`ラウンド${duRound-1}クリア！<br>`:'';
+  tone(784,.12,'square',.14,0);tone(1047,.16,'square',.14,.12);
+  duBanner('ラウンド'+duRound,`${head}押すボタンは${per}つ！<br>${tg}マスつなげたらおわり`,duRound>1?2000:1700,()=>duBegin(1));
+}
+function duBegin(turn){
+  duTurn=turn;duIdx=0;duAdded=0;duRepLen=duSeq.length;duLock=true;
+  const st=$('stage');
+  st.classList.toggle('p1turn',turn===1);
+  st.classList.toggle('p2turn',turn===2);
+  updateHud();
+  tone(turn===1?523:659,.12,'square',.14,0);
+  later(()=>{duLock=false},500);
+}
+function duPanel(html){
+  running=false;
+  $('stage').classList.remove('p1turn','p2turn');
+  if(online){duLastHtml=html;resultShown=true;$('panel').innerHTML=html+againButtonsHtml();$('panel').hidden=false;bindAgain();renderVs();return}
+  $('panel').innerHTML=html+`<div id="modeBtns"><button id="againBtn">もういちど</button><button class="sub" id="backBtn">モードをえらびなおす</button></div>`;
+  $('panel').hidden=false;
+  $('againBtn').onclick=()=>start(mode);
+  $('backBtn').onclick=showModeSelect;
+}
+function duFinish(loser){
+  if(online){const lose=loser===myP;return duPanel(`<h1>けっか</h1><p id="rankv">${lose?'💧':'🏆'}</p><p style="font-size:24px;color:var(--lit)">${lose?'まけ…':'かち！'}</p><p>${lose?'じぶん':'あいて'}が3回まちがえてアウト<br>ラウンド${duRound}・つながった数 ${duSeq.length}</p>`)}
+  const win=loser===1?2:1;
+  duPanel(`<h1>けっか</h1><p id="rankv">🏆</p><p>${win}Pのかち！<br>${loser}Pが3回まちがえてアウト<br>ラウンド${duRound}・つながった数 ${duSeq.length}</p>`);
+}
+function duFinishAll(){
+  if(online){const a=duLife[myP],b=duLife[3-myP],res=a===b?'ひきわけ！':(a>b?'かち！':'まけ…');return duPanel(`<h1>けっか</h1><p id="rankv">${a===b?'🤝':a>b?'🏆':'💧'}</p><p style="font-size:24px;color:var(--lit)">${res}</p><p>3ラウンドぜんぶクリア！<br>のこりおてつき じぶん:${a}回 / あいて:${b}回</p>`)}
+  const a=duLife[1],b=duLife[2];
+  const res=a===b?'ひきわけ！':(a>b?'1Pのかち！':'2Pのかち！');
+  duPanel(`<h1>けっか</h1><p id="rankv">🏆</p><p>${res}<br>3ラウンドぜんぶクリア！<br>のこりお手つき 1P:${a}回 / 2P:${b}回</p>`);
+}
+function duRoundEnd(){
+  if(duRound>=3)return duFinishAll();
+  duRound++;
+  duStartRound();
+}
+function onDuelCell(i,remote){
+  if(!running||duLock)return;
+  if(online&&!remote&&duTurn!==myP)return;
+  if(online&&!remote)sendR({t:'tap',i});
+  ac();
+  const cls=DU_CLS[duTurn];
+  if(duIdx<duRepLen){
+    if(duSeq[duIdx]!==i){
+      duLife[duTurn]--;
+      badSnd();memFlash(i,'bad',260);
+      updateHud();
+      duLock=true;
+      if(duLife[duTurn]<=0){
+        const who=duTurn;
+        later(()=>duFinish(who),700);
+      }else{
+        const hintCell=duSeq[duIdx];
+        later(()=>{tone(1040,.1,'sine',.12,0);memFlash(hintCell,'hint',700)},330);
+        later(()=>{duLock=false},1100);
+      }
+      return;
+    }
+    tone(440+i*14,.12,'square',.14,0);memFlash(i,cls,160);
+    duIdx++;updateHud();
+    return;
+  }
+  duSeq.push(i);duAdded++;
+  goodSnd();memFlash(i,cls,260);
+  if(duAdded<DU_PER[duRound-1]){updateHud();return}
+  duLock=true;updateHud();
+  if(duSeq.length>=DU_TARGET[duRound-1])later(duRoundEnd,700);
+  else later(()=>duBegin(duTurn===1?2:1),600);
+}
+// ---- order mode ----
+let orderSet=[],orderNext=1,orderEnd=0,orderTimeout=null,hudTimer=null;
+function orderClear(){orderSet.forEach(o=>{cells[o.i].classList.remove('numlit','numdone');cells[o.i].textContent=''});orderSet=[]}
+function orderRound(){
+  if(!running)return;
+  if(performance.now()>=orderEnd)return finish();
+  orderClear();clearTimeout(orderTimeout);
+  const n=1+Math.floor(rnd()*4);
+  const idxs=[];
+  while(idxs.length<n){const i=Math.floor(rnd()*CELLS);if(!idxs.includes(i))idxs.push(i)}
+  const nums=shuf([...Array(n).keys()].map(x=>x+1));
+  orderSet=idxs.map((i,k)=>({i,num:nums[k]}));
+  orderNext=1;
+  orderSet.forEach(o=>{cells[o.i].classList.add('numlit');cells[o.i].textContent=o.num});
+  const to=1300+n*650;
+  orderTimeout=setTimeout(()=>{misses++;badSnd();orderClear();updateHud();orderRound()},Math.min(to,orderEnd-performance.now()));
+}
+function onOrderCell(i){
+  if(!running)return;
+  ac();
+  const o=orderSet.find(x=>x.i===i);
+  if(o && o.num===orderNext && !cells[i].classList.contains('numdone')){
+    cells[i].classList.remove('numlit');cells[i].classList.add('numdone');
+    tone(700+orderNext*90,.08,'square',.13,0);
+    orderNext++;
+    if(orderNext>orderSet.length){
+      hits++;score+=20*orderSet.length;goodSnd();
+      clearTimeout(orderTimeout);updateHud();orderRound();
+    }
+  }else{
+    misses++;badSnd();
+    cells[i].classList.add('bad');setTimeout(()=>cells[i].classList.remove('bad'),180);
+    clearTimeout(orderTimeout);orderClear();updateHud();orderRound();
+  }
+}
+function finish(){
+  running=false;clearTimeout(timeoutId);clearTimeout(orderTimeout);clearTimeout(coTimeout);clearInterval(hudTimer);orderClear();coClear();
+  const[icon,label]=rank();
+  const acc=(hits+misses)?Math.round(hits/(hits+misses)*100):0;
+  const stat=mode==='memory'
+    ? `とうたつレベル ${memLevel}`
+    : (mode==='memoryRandom'||mode==='colorOrder'||mode==='colorFlash'||mode==='instant'||mode==='sound'||mode==='soundHide'||mode==='mirror'||mode==='oddColor'||mode==='sum'||mode==='sumRandom')
+    ? `せいかい ${acc}%・クリアしたラウンド ${hits}`
+    : mode==='order'
+    ? `せいかい ${acc}%・クリアした組 ${hits}`
+    : `せいかい ${acc}%・へいきん ${rts.length?Math.round(rts.reduce((a,b)=>a+b,0)/rts.length):0}ms`;
+  if(online){myFin={v:myVal(),icon,label,stat};sendR({t:'fin',g:curSeed,v:myFin.v});renderVs();return renderOnlineResult()}
+  $('panel').innerHTML=`<h1>けっか</h1><p id="rankv">${icon}</p><p>${label}<br>スコア ${score}<br>${stat}</p><div id="modeBtns"><button id="againBtn">もういちど</button><button class="sub" id="backBtn">モードをえらびなおす</button></div>`;
+  $('panel').hidden=false;
+  $('againBtn').onclick=()=>start(mode);
+  $('backBtn').onclick=showModeSelect;
+}
+function start(m){
+  mode=m||mode;
+  ac();score=0;hits=0;misses=0;rts=[];round=0;litIdx=-1;lastIdx=-1;
+  $('stage').classList.remove('p1turn','p2turn');
+  runId++;buildGrid((mode==='sound'||mode==='soundHide')?8:CELLS);setHudLabels(mode);
+  if(mode==='mirror')cells.forEach((c,i)=>{if(i%4<2)c.classList.add('mhalfL')});
+  $('panel').hidden=true;
+  running=true;
+  clearInterval(hudTimer);
+  if(mode==='order'){
+    orderEnd=performance.now()+30000;
+    updateHud();
+    hudTimer=setInterval(updateHud,250);
+    orderRound();
+  }else if(mode==='memory'){
+    memSeq=[];memInput=[];memLevel=0;
+    updateHud();
+    memNext();
+  }else if(mode==='memoryRandom'){
+    mrRound=0;mrSeq=[];mrInput=[];
+    updateHud();
+    mrNext();
+  }else if(mode==='colorOrder'){
+    coRound=0;coSet=[];coInput=[];
+    updateHud();
+    coNextRound();
+  }else if(mode==='colorFlash'){
+    cfRound=0;cfSet=[];cfInput=[];
+    updateHud();
+    cfNextRound();
+  }else if(mode==='instant'){
+    inRound=0;inSet=[];inHit=[];inLock=true;
+    updateHud();
+    inNext();
+  }else if(mode==='mirror'){
+    miRound=0;miSrc=[];miAns=[];miHit=[];miLock=true;
+    updateHud();
+    miNext();
+  }else if(mode==='oddColor'){
+    ocRound=0;ocOdd=-1;ocOpen=false;
+    updateHud();
+    ocNext();
+  }else if(mode==='duel'){
+    $('l1').textContent='ばん';$('l2').textContent='ながさ';$('l3').textContent='のこり';
+    duSeq=[];duLife={1:3,2:3};duRound=1;
+    duStartRound();
+  }else if(mode==='sum'||mode==='sumRandom'){
+    smRound=0;smAns=0;smOpen=false;
+    updateHud();
+    smNext();
+  }else if(mode==='sound'||mode==='soundHide'){
+    snRound=0;snSeq=[];snInput=[];snBusy=true;
+    updateHud();
+    snNext();
+  }else{
+    updateHud();
+    nextRound();
+  }
+}
+function stopGame(){
+  running=false;clearTimeout(timeoutId);clearTimeout(orderTimeout);clearTimeout(coTimeout);clearInterval(hudTimer);orderClear();coClear();cfSet=[];runId++;cdTok++;buildGrid();$('stage').classList.remove('p1turn','p2turn');
+}
+function showModeSelect(){
+  stopGame();
+  $('panel').innerHTML=`<h1>瞬間タッチ！</h1><p id="panelText">マスがランダムに光るよ。あそびかたをえらんでね！</p><div id="modeBtns"></div><div class="row2"><button class="sub" id="helpBtn">？ あそびかたを見る</button><button class="sub" id="netBtn">つうしんたいせん</button></div>`;
+  $('panel').hidden=false;
+  bindModeBtns();
+}
+const PAGES=[[['normal','ノーマルタッチ'],['color','トリプルカラータッチ'],['order','コンビタッチ'],['memory','メモリタッチ'],['memoryRandom','メモリランダムタッチ'],['colorOrder','カラータッチ'],['colorFlash','カラーフラッシュタッチ']],[['instant','インスタントタッチ'],['sound','サウンドタッチ'],['soundHide','サウンドハイドタッチ'],['mirror','ミラータッチ'],['oddColor','オッドカラータッチ'],['sum','サムタッチ'],['sumRandom','サムランダムタッチ']],[['duel','メモリバトルタッチ']]];
+let pageIdx=0;
+function stepPage(d){pageIdx=(pageIdx+d+PAGES.length)%PAGES.length;tone(520,.05,'square',.08,0);bindModeBtns(d)}
+function bindModeBtns(dir){
+  $('modeBtns').innerHTML='<div id="carousel"><button class="arrow" id="prevM" aria-label="まえ">◀</button><div id="pageBox">'+PAGES[pageIdx].map(([id,n])=>'<button data-mode="'+id+'">'+n+'</button>').join('')+'</div><button class="arrow" id="nextM" aria-label="つぎ">▶</button></div><div id="modeNo">'+(pageIdx+1)+' / '+PAGES.length+'</div><div id="dots">'+PAGES.map((_,k)=>'<span class="dot'+(k===pageIdx?' on':'')+'"></span>').join('')+'</div>';
+  if(dir===1||dir===-1){const pb=$('pageBox');pb.classList.add(dir>0?'sl':'sr')}
+  $('prevM').onclick=()=>stepPage(-1);
+  $('nextM').onclick=()=>stepPage(1);
+  let sx=null;
+  const mb=$('modeBtns');
+  mb.ontouchstart=e=>{sx=e.touches[0].clientX};
+  mb.ontouchend=e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>40)stepPage(dx<0?1:-1)};
+  const hb=$('helpBtn');if(hb)hb.onclick=()=>{$('helpPanel').hidden=false};
+  const nb=$('netBtn');if(nb)nb.onclick=showNetMenu;
+  document.querySelectorAll('#modeBtns [data-mode]').forEach(b=>{
+    b.onclick=()=>{
+      const m=b.dataset.mode;
+      $('panelText').textContent = m==='normal'
+        ? 'マスが黄色く光るよ。光ったらすぐタッチ！ぜんぶで30回！'
+        : m==='color'
+        ? '黄色は1かいタップ、青色は2かいれんだタップ、紫色は絶対おしちゃダメ！ぜんぶで30回！'
+        : m==='order'
+        ? '1〜4このマスに番号が出るよ。数字のじゅんばんどおりにタッチ！まちがえたらミス。30びょうかん挑戦！'
+        : m==='memory'
+        ? 'マスが光る順番をよくみて、おぼえた通りにタッチ！かいをおうごとに、おぼえる数がふえていくよ。まちがえたらおしまい！'
+        : m==='memoryRandom'
+        ? 'まいかい、ばしょも数（2〜5こ）もかわるよ！光った順番をおぼえてタッチ。まちがえても次のラウンドにすすめるよ。ぜんぶで15ラウンド！'
+        : m==='colorOrder'
+        ? '色つきのマスが同時に光るよ。場所と色はランダムだけど、押す順番は「黄→赤→紫→青→緑」でいつも固定！ぜんぶで15ラウンド！'
+        : m==='colorFlash'
+        ? '色つきのマスが1こずつ順番に光るよ。どこに何色が出たか覚えて、あとから「黄→赤→紫→青→緑」の順でタッチ！ぜんぶで15ラウンド！'
+        : m==='instant'
+        ? '3〜7このマスが一瞬だけ同時に青く光るよ！消えたら光ってた場所を全部タッチ（順番は自由）。ぜんぶで10ラウンド！'
+        : m==='sound'
+        ? '8マスのドレミになるよ！鳴った音の順番をおぼえて同じ順にタッチ。まちがえても次にすすめるよ。ぜんぶで10ラウンド！'
+        : m==='soundHide'
+        ? 'ドレミの音は鳴るけど、ボタンは光らないよ！耳だけをたよりに、鳴った順番どおりにタッチ。まちがえても次にすすめるよ。ぜんぶで10ラウンド！'
+        : m==='mirror'
+        ? '左がわのマスが一瞬だけ光るよ！鏡にうつしたみたいに、右がわの左右対称の場所をタッチ（順番は自由）。ぜんぶで10ラウンド！'
+        : m==='oddColor'
+        ? 'おなじ色のマスの中に、ちょっとだけ色がちがうマスが1こあるよ！いそいで見つけてタッチ。ラウンドが進むほど差が小さくなるよ。ぜんぶで12ラウンド！'
+        : m==='sum'
+        ? 'マスに数字が2つ出て、すぐ消えるよ。そのたし算の答えを暗算して、次に出る4〜7この数字から同じ答えをタッチ！答えは1つだけ。前半5ラウンドは2つ、後半5ラウンドは3つをたすよ。ぜんぶで10ラウンド！'
+        : m==='sumRandom'
+        ? 'サムタッチの上級編！たす数字が毎ラウンド2つ・3つ・4つのどれかにランダムで変わるよ。たし算の答えと同じ数字は1つだけ。ぜんぶで10ラウンド！'
+        : 'ふたりで交代の対戦！1マスずつ足して10マスでラウンド1おわり。ラウンド2は2マスずつで16マス、ラウンド3は3マスずつで24マス！おてつきは2回までOK、3回目でアウト。やりきったらおてつきがのこってる人の勝ち！ふちの色がだれのばんかの合図だよ。';
+      $('modeBtns').innerHTML=`<button id="startBtn">スタート</button>`;
+      $('startBtn').onclick=()=>{if(online)hostStart(m);else start(m)};
+    };
+  });
+}
+// ===== つうしんたいせん =====
+// Claudeの中ではアーティファクトの「room」でつなぐ。Claudeの外（GitHub Pagesなど）ではPeerJSでつなぐ。
+let online=false,linked=false,isHost=false,myP=1,roomCode='',net=null,partner=null,lastHeard=0,joinTimer=null,leftTimer=null;
+let netInfo='';
+let txSeq=0,txQ=[],rxSeq=0,rxBuf={};
+let curSeed=0,opp={score:0,fin:null},myFin=null,meReady=false,oppReady=false,resultShown=false,cdTok=0,duQ=[],duLastHtml='',lastSentV=null;
+const MODE_NAMES=Object.fromEntries(PAGES.flat());
+const myVal=()=>mode==='memory'?memLevel:score;
+
+// --- とどくまで送りなおす仕組み（順番も守る） ---
+function rawSend(o){if(net)try{net.send(o)}catch(e){}}
+function sendR(d){txSeq++;txQ.push({n:txSeq,d,at:Date.now()});rawSend({k:'r',n:txSeq,d})}
+function sendU(d){rawSend({k:'u',d})}
+function resetLink(){shaky=false;$('vs').classList.remove('shaky');txSeq=0;txQ=[];rxSeq=0;rxBuf={};partner=null;linked=false;lastHeard=Date.now()}
+function onRaw(o){
+  if(!o||typeof o!=='object')return;
+  lastHeard=Date.now();
+  if(o.k==='a'){if(typeof o.n==='number')txQ=txQ.filter(x=>x.n>o.n);return}
+  if(o.k==='u'){handleMsg(o.d);return}
+  if(o.k==='r'&&Number.isInteger(o.n)){
+    if(o.n>rxSeq&&!(o.n in rxBuf))rxBuf[o.n]=o.d;
+    while((rxSeq+1) in rxBuf){rxSeq++;const d=rxBuf[rxSeq];delete rxBuf[rxSeq];handleMsg(d);if(!net)return}
+    rawSend({k:'a',n:rxSeq});
+  }
+}
+function handleMsg(d){
+  if(!d||typeof d!=='object')return;
+  switch(d.t){
+    case 'hello': if(isHost&&!linked){linked=true;sendR({t:'welcome'});onLinked()} break;
+    case 'welcome': if(!isHost&&!linked){linked=true;clearTimeout(joinTimer);onLinked()} break;
+    case 'start': if(!isHost&&linked&&MODE_NAMES[d.mode]&&Number.isFinite(d.seed))beginOnline(d.mode,d.seed>>>0); break;
+    case 'sc': case 'ping': if(d.g&&d.g===curSeed&&!opp.fin&&typeof d.v==='number'){opp.score=d.v;renderVs()} break;
+    case 'fin': if(d.g===curSeed&&typeof d.v==='number'){opp.fin={v:d.v};opp.score=d.v;renderVs();if(myFin)renderOnlineResult()} break;
+    case 'tap': if(Number.isInteger(d.i)&&d.i>=0&&d.i<CELLS)duQ.push(d.i); break;
+    case 'again': oppReady=true;checkAgain();if(resultShown)rerenderResult(); break;
+    case 'lobby': if(linked)goLobby(false); break;
+    case 'bye': dissolve('あいてがへやを出たよ','あいてがへやを出たので、<br>へやは解散したよ'); break;
+  }
+}
+
+// --- つなぎ方その1：Claudeの中（room） ---
+async function getRoomNs(){
+  if(!(window.claude&&typeof window.claude.use==='function'))return null;
+  try{return await window.claude.use('room')}catch(e){return null}
+}
+async function openRoom(ns,code){
+  const r=await ns.join('shunkan-'+code);
+  const t={kind:'room',r,offs:[],send(o){r.emit('m',o).catch(()=>{})},close(){this.offs.forEach(f=>{try{f()}catch(e){}});r.leave().catch(()=>{})}};
+  t.offs.push(r.on('m',msg=>{
+    if(net!==t||msg.sameTab)return;
+    const o=msg.data;
+    if(!partner){
+      const ty=o&&o.k==='r'&&o.d&&o.d.t;
+      if(!linked&&((isHost&&ty==='hello')||(!isHost&&ty==='welcome')))partner=msg.peer;else return;
+    }
+    if(msg.peer!==partner)return;
+    onRaw(o);
+  },()=>{if(net===t){linked?dissolve('つうしんがきれたよ','あいてとのつうしんが切れちゃった…<br>へやは解散したよ'):netFail('つうしんがうまくいかなかったよ')}}));
+  t.offs.push(r.onPeers(ch=>{
+    if(net!==t||!partner)return;
+    if(ch.left.some(p=>p.peer===partner)){
+      clearTimeout(leftTimer);
+      leftTimer=setTimeout(()=>{if(net===t&&!r.peers().some(p=>p.peer===partner))dissolve('つうしんがきれたよ','あいてとのつうしんが切れちゃった…<br>へやは解散したよ')},2500);
+    }
+  }));
+  r.presence({role:isHost?'host':'guest'}).catch(()=>{});
+  return t;
+}
+// --- つなぎ方その2：Claudeの外（PeerJS） ---
+function loadPeerJS(){
+  return new Promise((res,rej)=>{
+    if(window.Peer)return res();
+    const s=document.createElement('script');
+    s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+    s.onload=()=>res();s.onerror=()=>rej('load');
+    document.head.appendChild(s);
+  });
+}
+function openPeer(code){
+  return new Promise(async(res,rej)=>{
+    try{await loadPeerJS()}catch(e){return rej('load')}
+    const id='shunkan-touch-'+code;
+    let done=false;
+    const t={kind:'peer',peer:null,conn:null,
+      send(o){if(this.conn&&this.conn.open)this.conn.send(o)},
+      close(){try{this.conn&&this.conn.close()}catch(e){}try{this.peer&&this.peer.destroy()}catch(e){}}};
+    const wire=c=>{
+      t.conn=c;
+      c.on('data',d=>{if(net===t)onRaw(d)});
+      c.on('open',()=>{if(!isHost)sendR({t:'hello'})});
+      c.on('close',()=>{if(net===t)linked?dissolve('つうしんがきれたよ','あいてとのつうしんが切れちゃった…<br>へやは解散したよ'):netFail('へやにはいれなかったよ')});
+    };
+    const to=setTimeout(()=>{if(!done){done=true;t.close();rej('timeout')}},12000);
+    try{t.peer=isHost?new Peer(id):new Peer()}catch(e){clearTimeout(to);return rej('peer')}
+    t.peer.on('open',()=>{
+      if(done)return;done=true;clearTimeout(to);
+      if(!isHost)wire(t.peer.connect(id,{reliable:true}));
+      res(t);
+    });
+    if(isHost)t.peer.on('connection',c=>{if(t.conn){try{c.close()}catch(e){}return}wire(c)});
+    t.peer.on('error',e=>{
+      const ty=e&&e.type;
+      if(!done){done=true;clearTimeout(to);t.close();return rej(ty||'error')}
+      if(net!==t)return;
+      if(ty==='peer-unavailable')return netFail('へやが見つからないよ（番号をたしかめてね）');
+      if(ty==='disconnected'||ty==='network'&&linked)return; // シグナリングだけ切れても、つながってる間は続ける
+      if(!linked)netFail('つうしんがうまくいかなかったよ');
+    });
+  });
+}
+
+async function openNet(code){
+  const ns=await getRoomNs();
+  netInfo=ns?'Claude':(window.claude?'Claude→PeerJS':'PeerJS');
+  try{return ns?await openRoom(ns,code):await openPeer(code)}
+  catch(e){netInfo+=' / '+((e&&e.code)||e||'error');throw e}
+}
+function closeNet(){
+  const t=net;net=null;partner=null;txQ=[];linked=false;
+  clearTimeout(joinTimer);clearTimeout(leftTimer);
+  if(t)try{t.close()}catch(e){}
+}
+
+// --- へやを作る／はいる ---
+async function createRoom(){
+  isHost=true;myP=1;
+  $('netMsg').textContent='じゅんびちゅう…';
+  for(let tries=0;tries<3&&!net;tries++){
+    roomCode=String(1000+Math.floor(Math.random()*9000));
+    resetLink();
+    try{net=await openNet(roomCode)}catch(e){net=null}
+  }
+  if(!net)return netFail('つうしんのじゅんびができなかったよ。もういちどためしてね');
+  showHostWait();
+}
+async function joinRoom(code){
+  isHost=false;myP=2;roomCode=code;
+  resetLink();
+  showConnecting();
+  let t;
+  try{t=await openNet(code)}catch(e){return netFail(e==='peer-unavailable'?'へやが見つからないよ（番号をたしかめてね）':'つうしんがうまくいかなかったよ')}
+  net=t;
+  joinTimer=setTimeout(()=>{if(net===t&&!linked)netFail('へやが見つからないよ（番号をたしかめてね）')},10000);
+  if(t.kind==='room')sendR({t:'hello'});
+}
+function onLinked(){
+  online=true;document.body.classList.add('net');
+  tone(660,.1,'square',.14,0);tone(990,.14,'square',.14,.1);
+  goLobby(false);
+}
+function dissolve(title,msg){
+  if(!net&&!online)return;
+  closeNet();online=false;linked=false;rnd=Math.random;curSeed=0;myFin=null;resultShown=false;
+  document.body.classList.remove('net');$('vs').hidden=true;
+  showModeSelect();
+  if(!msg)return;
+  $('panel').innerHTML=`<h1 style="color:var(--bad)">${title}</h1><p class="cutmark">×</p><p>${msg}</p><div id="modeBtns"><button id="okBtn">OK</button></div>`;
+  $('okBtn').onclick=showModeSelect;
+  badSnd();
+}
+function leaveRoom(){
+  sendU({t:'bye'});sendU({t:'bye'});
+  setTimeout(()=>{sendU({t:'bye'});dissolve('へやを出たよ')},150);
+}
+function netFail(msg){
+  closeNet();online=false;
+  document.body.classList.remove('net');$('vs').hidden=true;
+  showNetMenu();
+  $('netMsg').textContent=msg+(netInfo?'（'+netInfo+'）':'');
+}
+
+// --- 画面 ---
+function showNetMenu(){
+  stopGame();
+  $('panel').innerHTML=`<h1>つうしんたいせん</h1><p>ひとりが「へやをつくる」で番号を出して、もうひとりがその番号で「へやにはいる」よ！</p><div id="modeBtns"><button id="mkBtn">へやをつくる</button><input id="codeIn" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="off"><button id="joinBtn">へやにはいる</button></div><p id="netMsg"></p><button class="sub" id="netBack">もどる</button>`;
+  $('panel').hidden=false;
+  $('mkBtn').onclick=()=>{if(!net)createRoom()};
+  $('joinBtn').onclick=()=>{
+    const c=$('codeIn').value.replace(/\D/g,'');
+    if(c.length!==4){$('netMsg').textContent='4けたの番号を入れてね';return}
+    $('codeIn').blur();joinRoom(c);
+  };
+  $('netBack').onclick=()=>{closeNet();showModeSelect()};
+}
+function showHostWait(){
+  $('panel').innerHTML=`<h1>へやばんごう</h1><p class="bigcode">${roomCode}</p><p>この番号を、あいてに教えてね。<br>あいてが来るのを待ってるよ…</p><button class="sub" id="cancelNet">やめる</button>`;
+  $('panel').hidden=false;
+  $('cancelNet').onclick=()=>{closeNet();showNetMenu()};
+}
+function showConnecting(){
+  $('panel').innerHTML=`<h1>へや ${roomCode}</h1><p>へやをさがしてるよ…</p><button class="sub" id="cancelNet">やめる</button>`;
+  $('panel').hidden=false;
+  $('cancelNet').onclick=()=>{closeNet();showNetMenu()};
+}
+function showOnlineLobby(){
+  $('panel').innerHTML=`<h1>つうしんたいせん</h1><p id="panelText">へや ${roomCode}・あいてとつながったよ！<br>モードをえらんでね（あなたは1P）</p><div id="modeBtns"></div><div class="row2"><button class="sub" id="helpBtn">？ あそびかたを見る</button><button class="sub" id="leaveBtn">へやをでる</button></div>`;
+  $('panel').hidden=false;
+  bindModeBtns();
+  $('leaveBtn').onclick=leaveRoom;
+}
+function showGuestWait(){
+  $('panel').innerHTML=`<h1>つうしんたいせん</h1><p>へや ${roomCode}・あいてとつながったよ！<br>（あなたは2P）</p><p style="color:var(--lit)">へやを作った人がモードをえらんでるよ…<br>ちょっと待っててね！</p><div class="row2"><button class="sub" id="helpBtn">？ あそびかたを見る</button><button class="sub" id="leaveBtn">へやをでる</button></div>`;
+  $('panel').hidden=false;
+  $('helpBtn').onclick=()=>{$('helpPanel').hidden=false};
+  $('leaveBtn').onclick=leaveRoom;
+}
+function goLobby(send){
+  stopGame();
+  myFin=null;resultShown=false;meReady=oppReady=false;curSeed=0;duQ=[];rnd=Math.random;opp={score:0,fin:null};score=0;
+  if(send)sendR({t:'lobby'});
+  renderVs();
+  isHost?showOnlineLobby():showGuestWait();
+}
+
+// --- いっしょにスタート ---
+function hostStart(m){
+  const seed=(Math.floor(Math.random()*4294967295)>>>0)||1;
+  sendR({t:'start',mode:m,seed});
+  beginOnline(m,seed);
+}
+function beginOnline(m,seed){
+  stopGame();
+  mode=m;curSeed=seed;myFin=null;opp={score:0,fin:null};meReady=oppReady=false;resultShown=false;duQ=[];lastSentV=null;rnd=Math.random;score=0;
+  renderVs();
+  const t=cdTok,steps=['3','2','1','スタート！'];
+  const sub=m==='duel'
+    ?(myP===1?'あなたは1P（黄）。1Pからスタートだよ！':'あなたは2P（青）。1Pのあとにつづくよ！')
+    :'ふたりに同じ問題が出るよ。スコアが高いほうの勝ち！';
+  let k=0;
+  const tick=()=>{
+    if(t!==cdTok||!online)return;
+    if(k===steps.length){rnd=mulberry32(seed);start(m);return}
+    $('panel').innerHTML=`<h1>${MODE_NAMES[m]}</h1><p id="rankv">${steps[k]}</p><p>${sub}</p>`;
+    $('panel').hidden=false;
+    tone(k<3?660:1046,.14,'square',.15,0);
+    k++;setTimeout(tick,k<steps.length?800:500);
+  };
+  tick();
+}
+
+// --- あいてのようす ---
+let shaky=false;
+function setShaky(on){if(on===shaky)return;shaky=on;$('vs').classList.toggle('shaky',on);renderVs()}
+function renderVs(){
+  const v=$('vs');v.hidden=!online;if(!online)return;
+  if(shaky){$('vsMid').textContent='つうしんが不安定…';}
+  if(mode==='duel'&&curSeed){
+    const L=p=>'●'.repeat(Math.max(0,duLife[p]))+'○'.repeat(Math.max(0,3-duLife[p]));
+    $('vsMe').textContent=myP+'P'+L(myP);
+    $('vsOp').textContent=(3-myP)+'P'+L(3-myP);
+    if(!shaky)$('vsMid').textContent=!running?'VS':(duTurn===myP?'じぶんのばん！':'あいてのばん…');
+    return;
+  }
+  $('vsMe').textContent=curSeed?myVal():'-';
+  $('vsOp').textContent=curSeed?opp.score:'-';
+  if(!shaky)$('vsMid').textContent=opp.fin&&!myFin?'あいては おわったよ':'VS';
+}
+function onlineHud(){
+  renderVs();
+  if(mode==='duel'||!curSeed)return;
+  const v=myVal();
+  if(v!==lastSentV){lastSentV=v;sendU({t:'sc',g:curSeed,v})}
+}
+function againButtonsHtml(){
+  return `${oppReady&&!meReady?'<p style="color:var(--lit)">あいては「もういちど」をおしたよ！</p>':''}<div id="modeBtns"><button id="againBtn">${meReady?'あいてを待ってるよ…':'もういちど'}</button><button class="sub" id="backBtn">モードをえらびなおす</button></div><button class="sub" id="leaveBtn">へやをでる</button>`;
+}
+function bindAgain(){
+  const a=$('againBtn'),b=$('backBtn'),l=$('leaveBtn');
+  if(a)a.onclick=()=>{if(meReady)return;meReady=true;sendR({t:'again'});checkAgain();if(resultShown)rerenderResult()};
+  if(b)b.onclick=()=>goLobby(true);
+  if(l)l.onclick=leaveRoom;
+}
+function checkAgain(){if(isHost&&meReady&&oppReady&&resultShown)hostStart(mode)}
+function rerenderResult(){if(mode==='duel')duPanel(duLastHtml);else renderOnlineResult()}
+function renderOnlineResult(){
+  if(!myFin)return;
+  resultShown=true;
+  const unit=mode==='memory'?'レベル':'スコア';
+  let h;
+  if(!opp.fin){
+    h=`<h1>けっか</h1><p id="rankv">${myFin.icon}</p><p>じぶんの${unit} ${myFin.v}<br>${myFin.stat}</p><p style="color:var(--lit)">あいてがおわるのを待ってるよ…</p><button class="sub" id="leaveBtn">へやをでる</button>`;
+  }else{
+    const a=myFin.v,b=opp.fin.v,res=a>b?'かち！':a<b?'まけ…':'ひきわけ！';
+    h=`<h1>けっか</h1><p id="rankv">${a>b?'🏆':a<b?'💧':'🤝'}</p><p style="font-size:24px;color:var(--lit)">${res}</p><p>じぶん ${a} ／ あいて ${b}（${unit}）<br>${myFin.label}<br>${myFin.stat}</p>`+againButtonsHtml();
+  }
+  $('panel').innerHTML=h;$('panel').hidden=false;
+  bindAgain();
+}
+
+// --- タイマー（送りなおし・生存確認・メモリバトルの相手の手） ---
+setInterval(()=>{
+  if(!net)return;
+  const now=Date.now();
+  txQ.slice(0,8).forEach(x=>{if(now-x.at>600){x.at=now;rawSend({k:'r',n:x.n,d:x.d})}});
+},300);
+setInterval(()=>{
+  if(!net||!linked)return;
+  sendU({t:'ping',g:curSeed,v:(mode!=='duel'&&running)?myVal():undefined});
+  const gap=Date.now()-lastHeard;
+  if(gap>10000)return dissolve('つうしんがきれたよ','あいてとのつうしんが切れちゃった…<br>へやは解散したよ');
+  setShaky(gap>4000);
+},1500);
+setInterval(()=>{
+  if(online&&mode==='duel'&&running&&!duLock&&duQ.length&&duTurn!==myP)onDuelCell(duQ.shift(),true);
+},40);
+
+bindModeBtns();
+$('back').onclick=()=>{if(online)goLobby(true);else showModeSelect()};
+$('helpClose').onclick=()=>{$('helpPanel').hidden=true};
+$('snd').onclick=()=>{mute=!mute;$('sndImg').src=mute?'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAA/CAYAAABdA76NAAAA5UlEQVR4nO3bMYrCUBRAUSNTWFm4v6zO/U1hZacruL/4iBP+nNMGxFwevHyD22nS7+P5qmu362Wb/dyjOP/1FzgqYYIwQZggTBAm/Iwujlby6kxMECYIE4QJwgRhwvbtlXykk/dr3/PeTUwQJggThAnCBGHC8HS9gtFK3u73fHQwMUGYIEwQJggThAlLrOvZlTxiYoIwQZggTBAmCBOW/zHc6frDhAnCBGGCMEGYsPy6HvHueoIwQZggTBAmCBOGq3N2lR9pJc8yMUGYIEwQJggThAnTa9X/rv8pYYIwQZggTBAmvAEuGS3Gtx1tSQAAAABJRU5ErkJggg==':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAA/CAYAAABdA76NAAAA7UlEQVR4nO3bMWrDQBBA0SikcJXCl8gpcnqfwpdIkSqdc4K/xZDYQn6vXRDiMzAsQtvL0Nf3z63Ozu+nbfrcvXh99AvslTBBmCBMECYIE95Wh6uVfHQmJggThAnCBGGCMGG790qe3rxv1898z+3j8ue3eRMThAnCBGGCMEGYsLxd39t0Jf/HKjcxQZggTBAmCBOECbta11PTlbxa8yYmCBOECcIEYYIw4RDrenq7Xp2ZmCBMECYIE4QJwgTfroOJCcIEYYIwQZggTFiuuekq9yPXgQkThAnCBGGCMGG8Vv13/aSECcIEYYIwQZjwC/2wMUWZSQ79AAAAAElFTkSuQmCC'};
+document.addEventListener('pointerdown',()=>ac(),{once:true});
+buildGrid();
+</script>
+</body>
+</html>
