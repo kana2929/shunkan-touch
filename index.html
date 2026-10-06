@@ -51,7 +51,7 @@ body{margin:0;height:100%;background:linear-gradient(var(--bg1),var(--bg2));colo
 #carousel{display:flex;align-items:flex-start;gap:8px;width:100%}
 #pageBox{flex:1;display:flex;flex-direction:column;gap:10px;min-height:min(440px,54vh);min-width:0}
 #panel #pageBox button{width:100%;font-size:16px;padding:12px 6px}
-#panel #carousel .arrow{flex:0 0 40px;width:40px;align-self:center;height:72px;padding:0;font-size:22px;background:none;color:var(--txt);border:3px solid #4a5b7e;box-shadow:none}
+#panel .arrow{flex:0 0 40px;width:40px;align-self:center;height:72px;padding:0;font-size:22px;background:none;color:var(--txt);border:3px solid #4a5b7e;box-shadow:none}
 #modeNo{font-size:13px;color:#cdd6e4;text-align:center;margin-top:10px}
 #dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
 .dot{width:8px;height:8px;background:#3a4864}.dot.on{background:var(--lit)}
@@ -78,7 +78,7 @@ body{margin:0;height:100%;background:linear-gradient(var(--bg1),var(--bg2));colo
 #panel button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 rgba(0,0,0,.4)}
 #rankv{font-size:44px;margin:0}
 #helpPanel{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;padding:18px;background:rgba(14,19,28,.98);z-index:20;overflow-y:auto}
-#helpPanel[hidden]{display:none}
+#helpPanel[hidden],#helpPanel dt[hidden],#helpPanel dd[hidden]{display:none}
 #helpPanel h1{margin:0;font-size:22px;font-weight:400}
 #helpPanel dt{color:var(--lit);font-size:15px;margin-top:10px}
 #helpPanel dd{margin:2px 0 0;font-size:13px;line-height:1.6;color:#cdd6e4}
@@ -103,6 +103,45 @@ body.net #grid.wide{height:min(57vh,430px)}
 .bigcode{font-size:48px!important;letter-spacing:10px;color:var(--lit)!important;margin:0!important}
 #back,#snd{background:rgba(0,0,0,.22);border:2px solid #4a5b7e;color:var(--txt);font-family:inherit;font-size:11px;padding:5px 9px;cursor:pointer;flex:0 0 auto;image-rendering:pixelated}
 #snd img{width:22px;height:auto;display:block;image-rendering:pixelated}
+#modeBtns{max-width:340px}
+#panel #pageBox button{font-size:18px;padding:13px 8px}
+.ph{visibility:hidden;pointer-events:none}
+#panel .tapgo{font-size:22px!important;color:var(--lit)!important;margin:6px 0 0!important;animation:blink 1s steps(2) infinite;max-width:none!important}
+.rulerow{display:flex;justify-content:flex-start;margin-top:34px}
+#panel #ruleBtn{width:58px;height:58px;padding:0;border-radius:50%;font-size:26px;line-height:1;display:flex;align-items:center;justify-content:center;background:var(--blue);border-color:#1c6f96;color:#0d1a26}
+#helpPanel dt.focus{background:var(--lit);color:#2a2210;padding:2px 6px}
+.row2[hidden]{display:none}
+#pnav{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%}
+#panel #pnav .arrow{flex:0 0 68px;width:68px;height:46px;align-self:center}
+#pinfo #modeNo{margin-top:0}
+#pinfo #dots{margin-top:6px}
+body{height:100vh;height:100dvh}
+#stage{min-height:0}
+#grid{height:min(74vh,640px);height:min(74dvh,640px,100%)}
+#grid.wide{height:min(64vh,480px);height:min(64dvh,480px,100%)}
+body.net #grid{height:min(67dvh,590px,100%)}
+body.net #grid.wide{height:min(57dvh,430px,100%)}
+#panel{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#panel>:first-child{margin-top:auto}
+#panel>:last-child{margin-bottom:auto}
+#pageBox{min-height:min(440px,54dvh)}
+@media (max-height:780px){
+#panel{gap:8px;padding:12px 14px}
+#panel h1{font-size:21px}
+#panel p{font-size:13px;line-height:1.55}
+#pageBox{gap:7px;min-height:0}
+#panel #pageBox button{padding:10px 6px;font-size:17px}
+#panel #pnav .arrow{height:40px}
+#modeNo{margin-top:4px}#dots{margin-top:4px}
+#panel .row2 .sub{padding:7px 10px;font-size:13px}
+}
+@media (max-height:700px){
+#panel #pageBox button{padding:8px 6px;font-size:16px}
+#pageBox{gap:6px}
+#panel{gap:6px;padding:8px 12px}
+#panel h1{font-size:19px}
+#modeNo,#dots{margin-top:2px!important}
+}
 </style>
 </head>
 <body>
@@ -153,6 +192,16 @@ function tone(f,d,ty,v,t0,f2){const a=ac();if(!a||mute)return;const t=a.currentT
 function noise(d,f0,f1,v,t0){const a=ac();if(!a||mute)return;const n=Math.max(1,Math.floor(a.sampleRate*d)),bf=a.createBuffer(1,n,a.sampleRate),x=bf.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(t0||0);s.buffer=bf;fl.type='lowpass';fl.frequency.setValueAtTime(f0,t);fl.frequency.exponentialRampToValueAtTime(f1,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(fl);fl.connect(g);g.connect(a.destination);s.start(t)}
 const goodSnd=()=>{tone(880,.09,'square',.16,0);tone(1318,.14,'sine',.13,.05)};
 const badSnd=()=>{noise(.22,1200,150,.22,0);tone(140,.24,'sawtooth',.16,0,70)};
+// --- メニューの効果音 ---
+const selSnd=()=>{tone(988,.06,'square',.09,0);tone(1480,.09,'square',.08,.06)};
+const backSnd=()=>{tone(784,.07,'square',.09,0);tone(523,.07,'square',.09,.07);tone(392,.1,'square',.08,.14)};
+const startSnd=()=>{[523,659,784,1047].forEach((f,k)=>tone(f,k===3?.22:.08,'square',.1,k*.08));tone(2093,.25,'sine',.05,.24)};
+const BACK_IDS='#back,#backBtn,#netBack,#cancelNet,#leaveBtn,#helpClose';
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');
+  if(!b||b.classList.contains('cell')||b.id==='snd'||b.classList.contains('arrow')||b.classList.contains('ph'))return;
+  if(b.matches(BACK_IDS))backSnd();else selSnd();
+},true);
 
 const ROUNDS=30,CELLS=32;
 let runId=0;
@@ -927,7 +976,7 @@ function start(m){
   }
 }
 function stopGame(){
-  running=false;clearTimeout(timeoutId);clearTimeout(orderTimeout);clearTimeout(coTimeout);clearInterval(hudTimer);orderClear();coClear();cfSet=[];runId++;cdTok++;buildGrid();$('stage').classList.remove('p1turn','p2turn');
+  pendingStart=null;running=false;clearTimeout(timeoutId);clearTimeout(orderTimeout);clearTimeout(coTimeout);clearInterval(hudTimer);orderClear();coClear();cfSet=[];runId++;cdTok++;buildGrid();$('stage').classList.remove('p1turn','p2turn');
 }
 function showModeSelect(){
   stopGame();
@@ -939,7 +988,7 @@ const PAGES=[[['normal','ノーマルタッチ'],['color','トリプルカラー
 let pageIdx=0;
 function stepPage(d){pageIdx=(pageIdx+d+PAGES.length)%PAGES.length;tone(520,.05,'square',.08,0);bindModeBtns(d)}
 function bindModeBtns(dir){
-  $('modeBtns').innerHTML='<div id="carousel"><button class="arrow" id="prevM" aria-label="まえ">◀</button><div id="pageBox">'+PAGES[pageIdx].map(([id,n])=>'<button data-mode="'+id+'">'+n+'</button>').join('')+'</div><button class="arrow" id="nextM" aria-label="つぎ">▶</button></div><div id="modeNo">'+(pageIdx+1)+' / '+PAGES.length+'</div><div id="dots">'+PAGES.map((_,k)=>'<span class="dot'+(k===pageIdx?' on':'')+'"></span>').join('')+'</div>';
+  $('modeBtns').innerHTML='<div id="carousel"><div id="pageBox">'+PAGES[pageIdx].map(([id,n])=>'<button data-mode="'+id+'">'+n+'</button>').join('')+'<button class="ph" tabindex="-1" aria-hidden="true">あ</button>'.repeat(Math.max(...PAGES.map(p=>p.length))-PAGES[pageIdx].length)+'</div></div><div id="pnav"><button class="arrow" id="prevM" aria-label="まえ">◀</button><div id="pinfo"><div id="modeNo">'+(pageIdx+1)+' / '+PAGES.length+'</div><div id="dots">'+PAGES.map((_,k)=>'<span class="dot'+(k===pageIdx?' on':'')+'"></span>').join('')+'</div></div><button class="arrow" id="nextM" aria-label="つぎ">▶</button></div>';
   if(dir===1||dir===-1){const pb=$('pageBox');pb.classList.add(dir>0?'sl':'sr')}
   $('prevM').onclick=()=>stepPage(-1);
   $('nextM').onclick=()=>stepPage(1);
@@ -947,7 +996,7 @@ function bindModeBtns(dir){
   const mb=$('modeBtns');
   mb.ontouchstart=e=>{sx=e.touches[0].clientX};
   mb.ontouchend=e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>40)stepPage(dx<0?1:-1)};
-  const hb=$('helpBtn');if(hb)hb.onclick=()=>{$('helpPanel').hidden=false};
+  const hb=$('helpBtn');if(hb)hb.onclick=showAllRules;
   const nb=$('netBtn');if(nb)nb.onclick=showNetMenu;
   document.querySelectorAll('#modeBtns [data-mode]').forEach(b=>{
     b.onclick=()=>{
@@ -981,8 +1030,7 @@ function bindModeBtns(dir){
         : m==='sumRandom'
         ? 'サムタッチの上級編！たす数字が毎ラウンド2つ・3つ・4つのどれかにランダムで変わるよ。たし算の答えと同じ数字は1つだけ。ぜんぶで10ラウンド！'
         : 'ふたりで交代の対戦！1マスずつ足して10マスでラウンド1おわり。ラウンド2は2マスずつで16マス、ラウンド3は3マスずつで24マス！おてつきは2回までOK、3回目でアウト。やりきったらおてつきがのこってる人の勝ち！ふちの色がだれのばんかの合図だよ。';
-      $('modeBtns').innerHTML=`<button id="startBtn">スタート</button>`;
-      $('startBtn').onclick=()=>{if(online)hostStart(m);else start(m)};
+      armStart(m);
     };
   });
 }
@@ -1189,7 +1237,7 @@ function showOnlineLobby(){
 function showGuestWait(){
   $('panel').innerHTML=`<h1>つうしんたいせん</h1><p>へや ${roomCode}・あいてとつながったよ！<br>（あなたは2P）</p><p style="color:var(--lit)">へやを作った人がモードをえらんでるよ…<br>ちょっと待っててね！</p><div class="row2"><button class="sub" id="helpBtn">？ あそびかたを見る</button><button class="sub" id="leaveBtn">へやをでる</button></div>`;
   $('panel').hidden=false;
-  $('helpBtn').onclick=()=>{$('helpPanel').hidden=false};
+  $('helpBtn').onclick=showAllRules;
   $('leaveBtn').onclick=leaveRoom;
 }
 function goLobby(send){
@@ -1291,6 +1339,40 @@ setInterval(()=>{
 setInterval(()=>{
   if(online&&mode==='duel'&&running&&!duLock&&duQ.length&&duTurn!==myP)onDuelCell(duQ.shift(),true);
 },40);
+
+// --- 画面タップでスタート ---
+let pendingStart=null;
+function armStart(m){
+  const r2=document.querySelector('#panel .row2');if(r2)r2.remove();
+  $('modeBtns').innerHTML='<p class="tapgo">タップ<span id="deMark">で</span>スタート</p>';
+  pendingStart=null;setTimeout(()=>{pendingStart=m},0);
+}
+function placeRuleBtn(){
+  const d=$('deMark'),rb=$('ruleBtn');if(!d||!rb)return;
+  const row=rb.parentNode.getBoundingClientRect(),r=d.getBoundingClientRect();
+  rb.style.marginLeft=Math.round(r.left+r.width/2-row.left-rb.offsetWidth/2)+'px';
+}
+window.addEventListener('resize',placeRuleBtn);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(placeRuleBtn);
+function showRuleFor(m){
+  const hp=$('helpPanel');hp.hidden=false;hp.scrollTop=0;
+  hp.querySelectorAll('dt').forEach(d=>{
+    const on=d.textContent===MODE_NAMES[m],dd=d.nextElementSibling;
+    d.classList.remove('focus');d.hidden=!on;if(dd)dd.hidden=!on;
+  });
+}
+function showAllRules(){
+  const hp=$('helpPanel');hp.hidden=false;hp.scrollTop=0;
+  hp.querySelectorAll('dt,dd').forEach(x=>{x.hidden=false;x.classList.remove('focus')});
+}
+document.addEventListener('click',e=>{
+  if(!pendingStart)return;
+  if(e.target.closest('#back,#snd,#ruleBtn,#helpPanel'))return;
+  if(!$('helpPanel').hidden)return;
+  const m=pendingStart;pendingStart=null;
+  startSnd();
+  if(online)hostStart(m);else start(m);
+});
 
 bindModeBtns();
 $('back').onclick=()=>{if(online)goLobby(true);else showModeSelect()};
