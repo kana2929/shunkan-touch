@@ -9,6 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="瞬間タッチ">
 <meta name="theme-color" content="#141b28">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#1c2430;--bg1:#2b3a55;--bg2:#141b28;--card:#1e2738;--cell:#2d3a52;--lit:#ffd93d;--blue:#4fc3f7;--purple:#b388ff;--ok:#3fd67a;--bad:#ff5d5d;--txt:#eef2f8;
@@ -102,6 +104,21 @@ body.net #grid.wide{height:min(57vh,430px)}
 @keyframes blink{50%{opacity:.25}}
 .bigcode{font-size:48px!important;letter-spacing:10px;color:var(--lit)!important;margin:0!important}
 #back,#snd{background:rgba(0,0,0,.22);border:2px solid #4a5b7e;color:var(--txt);font-family:inherit;font-size:11px;padding:5px 9px;cursor:pointer;flex:0 0 auto;image-rendering:pixelated}
+#snd,#snd img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+#hud{position:relative}
+#volPop{position:absolute;right:8px;top:calc(100% + 6px);z-index:40;background:var(--card);border:2px solid #4a5b7e;box-shadow:4px 4px 0 rgba(0,0,0,.45);padding:10px 12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+#volPop[hidden]{display:none}
+#volPop p{margin:0;font-size:13px}
+#volBars{display:flex;align-items:flex-end;gap:6px}
+#volBars button{width:26px;padding:0;border:2px solid #4a5b7e;background:var(--cell);cursor:pointer;font-family:inherit}
+#volBars button.on{background:var(--lit);border-color:#b8961c}
+#volNum{font-size:12px;color:var(--lit)}
+#volBars button.zero{height:22px;width:22px;font-size:13px;line-height:1;color:var(--txt)}
+#volBars button.zero.on{background:var(--bad);border-color:#a33;color:#fff}
+#seRow{display:flex;align-items:center;gap:8px;font-size:13px;border-top:2px dashed #4a5b7e;padding-top:8px}
+#seBtn{font-family:inherit;font-size:13px;min-width:48px;padding:3px 8px;background:var(--ok);border:2px solid #23944f;color:#0d1a26;cursor:pointer}
+#seBtn.off{background:var(--cell);border-color:#4a5b7e;color:var(--txt)}
+#volPop p.volHint{font-size:10px;color:#9aa6ba}
 #snd img{width:22px;height:auto;display:block;image-rendering:pixelated}
 #modeBtns{max-width:340px}
 #panel #pageBox button{font-size:18px;padding:13px 8px}
@@ -147,6 +164,7 @@ body.net #grid.wide{height:min(57dvh,430px,100%)}
 <body>
 <div id="wrap">
   <div id="hud" class="card"><button id="back">← もどる</button><div id="stats"><span><i id="l1">スコア</i> <b id="score">0</b></span><span><i id="l2">せいかい</i> <b id="acc">0%</b></span><span><i id="l3">はんのう</i> <b id="rt">-</b></span></div><button id="snd" aria-label="おと"><img id="sndImg" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAA/CAYAAABdA76NAAAA7UlEQVR4nO3bMWrDQBBA0SikcJXCl8gpcnqfwpdIkSqdc4K/xZDYQn6vXRDiMzAsQtvL0Nf3z63Ozu+nbfrcvXh99AvslTBBmCBMECYIE95Wh6uVfHQmJggThAnCBGGCMGG790qe3rxv1898z+3j8ue3eRMThAnCBGGCMEGYsLxd39t0Jf/HKjcxQZggTBAmCBOECbta11PTlbxa8yYmCBOECcIEYYIw4RDrenq7Xp2ZmCBMECYIE4QJwgTfroOJCcIEYYIwQZggTFiuuekq9yPXgQkThAnCBGGCMGG8Vv13/aSECcIEYYIwQZjwC/2wMUWZSQ79AAAAAElFTkSuQmCC"></button></div>
+  <div id="volPop" hidden><p>BGMのおんりょう</p><div id="volBars"></div><span id="volNum"></span><div id="seRow"><span>こうかおん</span><button class="vol" id="seBtn">ON</button></div><p class="volHint">ながおしで ぜんぶオフ／オン</p></div>
   <div id="vs" class="card" hidden><span>じぶん <b id="vsMe">0</b></span><span id="vsMid">VS</span><span>あいて <b id="vsOp">0</b></span></div>
   <div id="stage" class="card">
     <div id="grid"></div>
@@ -186,10 +204,15 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let rnd=Math.random;
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-let AC,mute=false;
+let AC,mute=false,MG=null;
+const VOLS=[0,.12,.3,.55,1,1.6];let volLv=4,seOff=false;
+try{const v=localStorage.getItem('stVol2');if(v!==null&&+v>=0&&+v<=5)volLv=+v;seOff=localStorage.getItem('stSE')==='off'}catch(e){}
+const seBlocked=()=>seOff&&!(document.getElementById('grid')||{classList:{contains:()=>false}}).classList.contains('wide');
+function out(){if(!MG){MG=AC.createGain();MG.gain.value=1;MG.connect(AC.destination)}return MG}
+let BV=null;function bgmOut(){if(!BV){BV=AC.createGain();BV.gain.value=VOLS[volLv];BV.connect(out())}return BV}
 function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC}
-function tone(f,d,ty,v,t0,f2){const a=ac();if(!a||mute)return;const t=a.currentTime+(t0||0),o=a.createOscillator(),g=a.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d)}
-function noise(d,f0,f1,v,t0){const a=ac();if(!a||mute)return;const n=Math.max(1,Math.floor(a.sampleRate*d)),bf=a.createBuffer(1,n,a.sampleRate),x=bf.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(t0||0);s.buffer=bf;fl.type='lowpass';fl.frequency.setValueAtTime(f0,t);fl.frequency.exponentialRampToValueAtTime(f1,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(fl);fl.connect(g);g.connect(a.destination);s.start(t)}
+function tone(f,d,ty,v,t0,f2){const a=ac();if(!a||mute||seBlocked())return;const t=a.currentTime+(t0||0),o=a.createOscillator(),g=a.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(out());o.start(t);o.stop(t+d)}
+function noise(d,f0,f1,v,t0){const a=ac();if(!a||mute||seBlocked())return;const n=Math.max(1,Math.floor(a.sampleRate*d)),bf=a.createBuffer(1,n,a.sampleRate),x=bf.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(t0||0);s.buffer=bf;fl.type='lowpass';fl.frequency.setValueAtTime(f0,t);fl.frequency.exponentialRampToValueAtTime(f1,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(fl);fl.connect(g);g.connect(out());s.start(t)}
 const goodSnd=()=>{tone(880,.09,'square',.16,0);tone(1318,.14,'sine',.13,.05)};
 const badSnd=()=>{noise(.22,1200,150,.22,0);tone(140,.24,'sawtooth',.16,0,70)};
 // --- メニューの効果音 ---
@@ -199,7 +222,7 @@ const startSnd=()=>{[523,659,784,1047].forEach((f,k)=>tone(f,k===3?.22:.08,'squa
 const BACK_IDS='#back,#backBtn,#netBack,#cancelNet,#leaveBtn,#helpClose';
 document.addEventListener('click',e=>{
   const b=e.target.closest('button');
-  if(!b||b.classList.contains('cell')||b.id==='snd'||b.classList.contains('arrow')||b.classList.contains('ph'))return;
+  if(!b||b.classList.contains('vol')||b.classList.contains('cell')||b.id==='snd'||b.classList.contains('arrow')||b.classList.contains('ph'))return;
   if(b.matches(BACK_IDS))backSnd();else selSnd();
 },true);
 
@@ -1367,7 +1390,7 @@ function showAllRules(){
 }
 document.addEventListener('click',e=>{
   if(!pendingStart)return;
-  if(e.target.closest('#back,#snd,#ruleBtn,#helpPanel'))return;
+  if(e.target.closest('#back,#snd,#ruleBtn,#helpPanel,#volPop'))return;
   if(!$('helpPanel').hidden)return;
   const m=pendingStart;pendingStart=null;
   startSnd();
@@ -1377,9 +1400,82 @@ document.addEventListener('click',e=>{
 bindModeBtns();
 $('back').onclick=()=>{if(online)goLobby(true);else showModeSelect()};
 $('helpClose').onclick=()=>{$('helpPanel').hidden=true};
-$('snd').onclick=()=>{mute=!mute;$('sndImg').src=mute?'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAA/CAYAAABdA76NAAAA5UlEQVR4nO3bMYrCUBRAUSNTWFm4v6zO/U1hZacruL/4iBP+nNMGxFwevHyD22nS7+P5qmu362Wb/dyjOP/1FzgqYYIwQZggTBAm/Iwujlby6kxMECYIE4QJwgRhwvbtlXykk/dr3/PeTUwQJggThAnCBGHC8HS9gtFK3u73fHQwMUGYIEwQJggThAlLrOvZlTxiYoIwQZggTBAmCBOW/zHc6frDhAnCBGGCMEGYsPy6HvHueoIwQZggTBAmCBOGq3N2lR9pJc8yMUGYIEwQJggThAnTa9X/rv8pYYIwQZggTBAmvAEuGS3Gtx1tSQAAAABJRU5ErkJggg==':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAA/CAYAAABdA76NAAAA7UlEQVR4nO3bMWrDQBBA0SikcJXCl8gpcnqfwpdIkSqdc4K/xZDYQn6vXRDiMzAsQtvL0Nf3z63Ozu+nbfrcvXh99AvslTBBmCBMECYIE95Wh6uVfHQmJggThAnCBGGCMGG790qe3rxv1898z+3j8ue3eRMThAnCBGGCMEGYsLxd39t0Jf/HKjcxQZggTBAmCBOECbta11PTlbxa8yYmCBOECcIEYYIw4RDrenq7Xp2ZmCBMECYIE4QJwgTfroOJCcIEYYIwQZggTFiuuekq9yPXgQkThAnCBGGCMGG8Vv13/aSECcIEYYIwQZjwC/2wMUWZSQ79AAAAAElFTkSuQmCC'};
-document.addEventListener('pointerdown',()=>ac(),{once:true});
-buildGrid();
+const MUTE_IMG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAA/CAYAAABdA76NAAAA5UlEQVR4nO3bMYrCUBRAUSNTWFm4v6zO/U1hZacruL/4iBP+nNMGxFwevHyD22nS7+P5qmu362Wb/dyjOP/1FzgqYYIwQZggTBAm/Iwujlby6kxMECYIE4QJwgRhwvbtlXykk/dr3/PeTUwQJggThAnCBGHC8HS9gtFK3u73fHQwMUGYIEwQJggThAlLrOvZlTxiYoIwQZggTBAmCBOW/zHc6frDhAnCBGGCMEGYsPy6HvHueoIwQZggTBAmCBOGq3N2lR9pJc8yMUGYIEwQJggThAnTa9X/rv8pYYIwQZggTBAmvAEuGS3Gtx1tSQAAAABJRU5ErkJggg==',ON_IMG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAA/CAYAAABdA76NAAAA7UlEQVR4nO3bMWrDQBBA0SikcJXCl8gpcnqfwpdIkSqdc4K/xZDYQn6vXRDiMzAsQtvL0Nf3z63Ozu+nbfrcvXh99AvslTBBmCBMECYIE95Wh6uVfHQmJggThAnCBGGCMGG790qe3rxv1898z+3j8ue3eRMThAnCBGGCMEGYsLxd39t0Jf/HKjcxQZggTBAmCBOECbta11PTlbxa8yYmCBOECcIEYYIw4RDrenq7Xp2ZmCBMECYIE4QJwgTfroOJCcIEYYIwQZggTFiuuekq9yPXgQkThAnCBGGCMGG8Vv13/aSECcIEYYIwQZjwC/2wMUWZSQ79AAAAAElFTkSuQmCC';
+function updIcon(){$('sndImg').src=mute?MUTE_IMG:ON_IMG}
+function setMute(v){mute=v;updIcon()}
+$('snd').onclick=()=>{if(lpFired){lpFired=false;return}if($('volPop').hidden)openVol();else closeVol()};
+// iPhoneは「さわった時」しか音を出させてくれないので、どこをさわっても音が目ざめるようにする
+function unlockAudio(){const a=ac();if(!a)return;if(a.state!=='running'){a.resume();const b=a.createBuffer(1,1,22050),src=a.createBufferSource();src.buffer=b;src.connect(a.destination);src.start(0)}}
+['pointerdown','touchstart','touchend','click','keydown'].forEach(t=>document.addEventListener(t,unlockAudio,{capture:true,passive:true}));
+// --- 音量ボタン長押しで音量調整（5段階） ---
+$('hud').appendChild($('volPop'));
+let lpTimer=null,lpFired=false;
+function setVol(i){
+  volLv=i;try{localStorage.setItem('stVol2',String(i))}catch(e){}
+  if(BV&&AC){BV.gain.cancelScheduledValues(AC.currentTime);BV.gain.setValueAtTime(VOLS[i],AC.currentTime)}
+  if(mute&&i>0)mute=false;
+  updIcon();drawVol();
+}
+function sample(){ac();tone(988,.06,'square',.09,0);tone(1480,.09,'square',.08,.06)}
+function drawVol(){
+  $('volBars').innerHTML='<button class="vol zero'+(volLv===0?' on':'')+'" data-v="0" aria-label="0">×</button>'+[1,2,3,4,5].map(i=>'<button class="vol'+(i<=volLv?' on':'')+'" data-v="'+i+'" style="height:'+(8+i*8)+'px" aria-label="'+i+'"></button>').join('');
+  $('volNum').textContent=(mute?'ぜんぶオフ':volLv+' / 5');
+  $('volBars').querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();setVol(+b.dataset.v)});
+  const se=$('seBtn');se.textContent=seOff?'OFF':'ON';se.classList.toggle('off',seOff);
+}
+$('seBtn').onclick=e=>{e.stopPropagation();seOff=!seOff;try{localStorage.setItem('stSE',seOff?'off':'on')}catch(x){}drawVol();sample()};
+function openVol(){drawVol();$('volPop').hidden=false}
+function closeVol(){$('volPop').hidden=true}
+const sb=$('snd');
+sb.addEventListener('pointerdown',()=>{clearTimeout(lpTimer);lpFired=false;lpTimer=setTimeout(()=>{lpFired=true;setMute(!mute);closeVol();if(navigator.vibrate)navigator.vibrate(15)},700)});
+['pointerup','pointerleave','pointercancel'].forEach(t=>sb.addEventListener(t,()=>clearTimeout(lpTimer)));
+sb.addEventListener('contextmenu',e=>e.preventDefault());
+let swallowClick=false;
+document.addEventListener('pointerdown',e=>{if(!$('volPop').hidden&&!e.target.closest('#volPop,#snd')){closeVol();swallowClick=true;setTimeout(()=>swallowClick=false,500);e.stopPropagation();e.preventDefault()}},true);
+document.addEventListener('click',e=>{if(swallowClick){swallowClick=false;e.stopPropagation();e.preventDefault()}},true);
+
+// --- BGM（明るいピコピコ曲・ラヴのオリジナル） ---
+const BGM_E=60/160/2; // 8分音符の長さ（テンポ160）
+const NT=n=>{const m={C:0,D:2,E:4,F:5,G:7,A:9,B:11},o=+n.slice(-1);return 440*Math.pow(2,(12*(o+1)+m[n[0]]-69)/12)};
+const BGM_MEL=[
+ ['C5',2],['E5',1],['G5',1],['A5',2],['G5',1],['E5',1], ['F5',2],['A5',1],['G5',1],['E5',2],['C5',2],
+ ['D5',1],['E5',1],['F5',1],['G5',1],['A5',2],['F5',2], ['E5',2],['D5',1],['C5',1],['D5',4],
+ ['C5',2],['E5',1],['G5',1],['A5',2],['G5',1],['E5',1], ['F5',2],['A5',1],['C6',1],['B5',2],['G5',2],
+ ['A5',1],['G5',1],['F5',1],['E5',1],['D5',2],['G5',2], ['C5',6],[null,2],
+ ['A5',2],['F5',1],['A5',1],['C6',2],['A5',2], ['G5',2],['E5',1],['G5',1],['C6',4],
+ ['F5',1],['G5',1],['A5',1],['F5',1],['E5',1],['F5',1],['G5',1],['E5',1], ['D5',2],['E5',1],['F5',1],['G5',4],
+ ['A5',2],['F5',1],['A5',1],['C6',2],['A5',2], ['G5',2],['E5',1],['C5',1],['E5',2],['G5',2],
+ ['F5',1],['E5',1],['D5',1],['E5',1],['F5',2],['B4',2], ['C5',4],['G4',2],[null,2]
+];
+const BGM_BASS=['C3','F2','D3','G2','C3','F2','D3','C3','F2','C3','F2','G2','F2','C3','G2','C3'];
+let bgmOn=false,bgmGain=null,bgmT=0,bgmStep=0,bgmMi=0,bgmMLeft=0;
+function bgmNote(f,t,d,ty,v){const o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(v*.5,t+d*.8);g.gain.exponentialRampToValueAtTime(.0005,t+d*.95);o.connect(g);g.connect(bgmGain);o.start(t);o.stop(t+d)}
+function bgmHat(t){const n=Math.floor(AC.sampleRate*.03),b=AC.createBuffer(1,n,AC.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=(Math.random()*2-1)*(1-i/n);const s=AC.createBufferSource(),h=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;h.type='highpass';h.frequency.value=7000;g.gain.value=.05;s.connect(h);h.connect(g);g.connect(bgmGain);s.start(t)}
+function bgmStart(){
+  if(bgmOn||!AC)return;bgmOn=true;
+  bgmGain=AC.createGain();bgmGain.gain.setValueAtTime(.0001,AC.currentTime);bgmGain.gain.exponentialRampToValueAtTime(1,AC.currentTime+.4);bgmGain.connect(bgmOut());
+  bgmT=AC.currentTime+.1;bgmStep=0;bgmMi=0;bgmMLeft=0;
+}
+function bgmStop(){
+  if(!bgmOn)return;bgmOn=false;const g=bgmGain;bgmGain=null;
+  try{g.gain.cancelScheduledValues(AC.currentTime);g.gain.setValueAtTime(g.gain.value,AC.currentTime);g.gain.linearRampToValueAtTime(0,AC.currentTime+.15);setTimeout(()=>g.disconnect(),400)}catch(e){}
+}
+function bgmTick(){
+  const want=AC&&AC.state==='running'&&!mute&&volLv>0&&!document.hidden&&!$('grid').classList.contains('wide');
+  if(want)bgmStart();else{bgmStop();return}
+  while(bgmT<AC.currentTime+.35){
+    const bar=Math.floor(bgmStep/8)%16,beat=bgmStep%8;
+    if(bgmMLeft<=0){const [n,len]=BGM_MEL[bgmMi];if(n)bgmNote(NT(n),bgmT,len*BGM_E,'square',.045);bgmMLeft=len;bgmMi=(bgmMi+1)%BGM_MEL.length}
+    bgmMLeft--;
+    const r=NT(BGM_BASS[bar]);bgmNote(beat%2?r*2:r,bgmT,BGM_E*.9,'triangle',.13);
+    if(beat%2)bgmHat(bgmT);
+    bgmT+=BGM_E;bgmStep=(bgmStep+1)%128;
+    if(bgmStep===0){bgmMi=0;bgmMLeft=0}
+  }
+}
+setInterval(bgmTick,60);
+
+buildGrid();updIcon();
 </script>
 </body>
 </html>
